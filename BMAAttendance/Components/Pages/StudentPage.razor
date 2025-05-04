@@ -1,5 +1,6 @@
 @page "/student/{studentid}"
 @inject BMAService bmaService
+@using QRCoder
 
 <AuthorizeView>
     <Authorized>
@@ -44,6 +45,11 @@
                                             <td>Phone</td>
                                             <td>@Student.PhoneNumber</td>
                                         </tr>
+                                        <tr>
+                                            <td colspan="2">
+                                                <img src="@QRCodeImg" width="100" />
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </MudSimpleTable>
                                 <MudText Typo="Typo.caption">More to come here soon</MudText>
@@ -56,10 +62,51 @@
                     </MudCard>
                 </MudItem>
                 <MudItem xs="12" sm="12" md="6" lg="4" xl="4">
-                    Ranks
+                    <MudSimpleTable Striped Bordered>
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Date Promoted</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <MudSelect @bind-Value="PromoteRank" Clearable T="BMARank">
+                                        @foreach (BMARank rank in Ranks.Where(e => e.OrderNumber > (Ranks.FirstOrDefault(f => f.ID == Student.RankID)?.OrderNumber ?? 0)))
+                                        {
+                                            <MudSelectItem Value="rank">@rank.RankName</MudSelectItem>                                            
+                                        }
+                                    </MudSelect>
+                                </td>
+                                <td>
+                                    <MudDatePicker @bind-Date="PromoteDate" Label="Date Awarded" MinDate="Student.DateAwarded" />
+                                </td>
+                                <td>
+                                    <MudButton OnClick="AwardRank" Variant="Variant.Filled" Color="Color.Info"
+                                    Disabled="PromoteDate == null || PromoteRank == null">Award</MudButton>
+                                </td>
+                            </tr>
+                            @foreach (BMAStudentRank rank in StudentRanks.OrderByDescending(e => e.DateAwarded))
+                            {
+                                <tr>
+                                    <td>@Ranks.FirstOrDefault(e => e.ID == rank.RankID)?.RankName</td>
+                                    <td>@rank.DateAwarded.ToString("MM/dd/yy")</td>
+                                    <td>
+                                        <MudIconButton Color="Color.Error" Icon="@Icons.Material.TwoTone.DeleteForever" OnClick="() => DeleteStudentRank(rank)" Disabled="rank.RankID != Student.RankID" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
                 </MudItem>
                 <MudItem xs="12" sm="12" md="6" lg="4" xl="4">
-                    <MudSimpleTable>
+                    <MudStack Row>
+                        <MudToggleIconButton @bind-Toggled="OnlyRecent" Icon="@Icons.Material.TwoTone.AllInclusive" Color="Color.Primary" ToggledIcon="@Icons.Material.TwoTone.CalendarMonth" ToggledColor="Color.Info"  />
+                        <MudText>@(OnlyRecent ? "Only Since Last Promotion" : "All Attendances")</MudText>
+                    </MudStack>
+                    <MudSimpleTable Striped Bordered Dense>
                         <thead>
                             <tr>
                                 <th>Date</th>
@@ -75,7 +122,7 @@
                                     <MudIconButton Icon="@Icons.Material.TwoTone.Save" OnClick="SaveDate" Color="Color.Success" Disabled="SelectedDate == null" />
                                 </td>
                             </tr>
-                            @foreach (BMAStudentAttend attend in Student.Attends)
+                            @foreach (BMAStudentAttend attend in Student.Attends.Where(e => e.AttendDate >= Student.DateAwarded || !OnlyRecent).OrderByDescending(e => e.AttendDate))
                             {
                                 <tr>
                                     <td>@attend.AttendDate.ToString("MM/dd/yy")</td>
@@ -100,11 +147,29 @@
     [CascadingParameter] public BMAUser? User { get; set; }
     [Parameter] public string? studentid { get; set; }
     private BMAStudent? Student { get; set; }
+    private List<BMARank> Ranks { get; set; } = [];
+    private List<BMAStudentRank> StudentRanks { get; set; } = [];
+    private string? QRCodeImg { get; set; } = null;
+    protected override void OnInitialized()
+    {
+        Ranks = bmaService.GetRanks();
+    }
     protected override void OnParametersSet()
     {
         if (Guid.TryParse(studentid, out Guid StudentID) && (Student == null || Student.ID != StudentID))
         {
             Student = bmaService.GetStudentByID(StudentID);
+            StudentRanks = bmaService.GetStudentRanksByStudent(StudentID);
+            QRCodeImg = null;
+            QRCodeGenerator qrGenerator = new QRCodeGenerator();
+            QRCodeData qrData = qrGenerator.CreateQrCode($"https://berringerma.azurewebsites.net/student/{Student.ID}",QRCodeGenerator.ECCLevel.Q);
+            using (BitmapByteQRCode qrCode = new BitmapByteQRCode(qrData))
+            {
+                byte[] qrImg = qrCode.GetGraphic(20);
+                string base64 = Convert.ToBase64String(qrImg);
+                QRCodeImg = string.Format("data:image/png;base64,{0}", base64);
+            }
+
         }
     }
     private DateTime? SelectedDate { get; set; } = DateTime.Today;
@@ -126,4 +191,55 @@
         bmaService.DeleteAttend(attend);
         Student!.Attends.Remove(attend);
     }
+    private BMARank? PromoteRank { get; set; }
+    private DateTime? PromoteDate { get; set; } = DateTime.Today;
+    private void AwardRank()
+    {
+        if (PromoteRank == null || PromoteDate == null || Student == null)
+            return;
+        BMAStudentRank studentrank = new BMAStudentRank()
+        {
+            StudentID = Student.ID,
+            DateAwarded = PromoteDate.Value,
+            RankID = PromoteRank.ID,
+            Rank = PromoteRank
+        };
+        bmaService.CreateStudentRank(studentrank);
+        StudentRanks.Add(studentrank);
+        Student.RankID = PromoteRank.ID;
+        Student.DateAwarded = PromoteDate.Value;
+        bmaService.UpdateStudent(Student);
+        PromoteDate = null;
+        PromoteRank = null;
+    }
+    private void DeleteStudentRank(BMAStudentRank studentrank)
+    {
+        if (Student == null)
+            return;
+        bmaService.DeleteStudentRank(studentrank);
+        StudentRanks.Remove(studentrank);
+        Student.RankID = null;
+        Student.DateAwarded = null;
+        int maxrank = -1; //going backwards in time is actual work apparently
+        foreach (BMAStudentRank sr in StudentRanks)
+        {
+            BMARank? rank = Ranks.FirstOrDefault(e => e.ID == sr.RankID);
+            if ((rank?.OrderNumber ?? -1) > maxrank)
+                maxrank = rank!.OrderNumber;
+        }
+        if (maxrank > -1)
+        {
+            BMARank? toprank = Ranks.FirstOrDefault(e => e.OrderNumber == maxrank);
+            if (toprank != null)
+            {
+                BMAStudentRank? topsr = StudentRanks.FirstOrDefault(e => e.RankID == toprank.ID);
+                if (topsr != null)
+                {
+                    Student.RankID = topsr.RankID;
+                    Student.DateAwarded = topsr.DateAwarded;
+                }
+            }
+        }
+    }
+    private bool OnlyRecent = true;
 }

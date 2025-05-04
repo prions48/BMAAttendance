@@ -79,5 +79,40 @@ namespace BMAAttendance.Data.Models
             _context.SaveChanges();
         }
         #endregion
+
+        #region Ranks
+        public List<BMARank> GetRanks()
+        {
+            return _context.BMARanks.ToList();
+        }
+        public BMARank? GetRankByID(Guid rankid)
+        {
+            return _context.BMARanks.FirstOrDefault(e => e.ID == rankid);
+        }
+        public void CreateRank(BMARank rank)
+        {
+            _context.BMARanks.Add(rank);
+            _context.SaveChanges();
+        }
+        public void DeleteRank(BMARank rank)
+        {
+            _context.BMARanks.Remove(rank);
+            _context.SaveChanges();
+        }
+        public List<BMAStudentRank> GetStudentRanksByStudent(Guid studentid)
+        {
+            return _context.BMAStudentRanks.Where(e => e.StudentID == studentid).OrderBy(e => e.DateAwarded).ToList();
+        }
+        public void CreateStudentRank(BMAStudentRank studentrank)
+        {
+            _context.BMAStudentRanks.Add(studentrank);
+            _context.SaveChanges();
+        }
+        public void DeleteStudentRank(BMAStudentRank studentrank)
+        {
+            _context.BMAStudentRanks.Remove(studentrank);
+            _context.SaveChanges();
+        }
+        #endregion
     }
 }

@@ -7,6 +7,7 @@ namespace BMAAttendance.Data.Models
         [Key] public Guid ID { get; set; }
         public string RankName { get; set; } = "";
         public string? RankDescription { get; set; }
+        public int OrderNumber { get; set; }
         public string? Color1 { get; set; }
         public string? Color2 { get; set; }
         public BMARank()
