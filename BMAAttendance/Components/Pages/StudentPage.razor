@@ -1,0 +1,129 @@
+@page "/student/{studentid}"
+@inject BMAService bmaService
+
+<AuthorizeView>
+    <Authorized>
+        @if (User == null)
+        {
+            <MudText Typo="Typo.h6">Please contact tech support to repair your user configuration.</MudText>
+        }
+        else if (!User.DashboardAccess)
+        {
+            <MudText Typo="Typo.h6">You do not have access to this resource.</MudText>
+        }
+        else if (Student == null)
+        {
+            <MudText Typo="Typo.h6">Student not found.</MudText>
+        }
+        else
+        {
+            <MudGrid>
+                <MudItem xs="12" sm="12" md="6" lg="4" xl="4">
+                    <MudCard Elevation="1" Outlined>
+                        <MudCardHeader>@Student?.StudentName</MudCardHeader>
+                        <MudCardContent>
+                            @if (Student != null)
+                            {
+                                <MudSimpleTable Striped Bordered>
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Name</td>
+                                            <td>@Student.StudentName</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Email</td>
+                                            <td>@Student.EmailAddress</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Phone</td>
+                                            <td>@Student.PhoneNumber</td>
+                                        </tr>
+                                    </tbody>
+                                </MudSimpleTable>
+                                <MudText Typo="Typo.caption">More to come here soon</MudText>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.h6">Student not found.</MudText>
+                            }
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="12" sm="12" md="6" lg="4" xl="4">
+                    Ranks
+                </MudItem>
+                <MudItem xs="12" sm="12" md="6" lg="4" xl="4">
+                    <MudSimpleTable>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <MudDatePicker @bind-Date="SelectedDate" Clearable Label="Log New" />
+                                </td>
+                                <td>
+                                    <MudIconButton Icon="@Icons.Material.TwoTone.Save" OnClick="SaveDate" Color="Color.Success" Disabled="SelectedDate == null" />
+                                </td>
+                            </tr>
+                            @foreach (BMAStudentAttend attend in Student.Attends)
+                            {
+                                <tr>
+                                    <td>@attend.AttendDate.ToString("MM/dd/yy")</td>
+                                    <td>
+                                        <MudIconButton OnClick="() => DeleteDate(attend)" Color="Color.Error" Icon="@Icons.Material.TwoTone.DeleteForever" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                </MudItem>
+            </MudGrid>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <MudText Typo="Typo.h6">You must log in to view this content.</MudText>
+    </NotAuthorized>
+</AuthorizeView>
+
+
+@code {
+    [CascadingParameter] public BMAUser? User { get; set; }
+    [Parameter] public string? studentid { get; set; }
+    private BMAStudent? Student { get; set; }
+    protected override void OnParametersSet()
+    {
+        if (Guid.TryParse(studentid, out Guid StudentID) && (Student == null || Student.ID != StudentID))
+        {
+            Student = bmaService.GetStudentByID(StudentID);
+        }
+    }
+    private DateTime? SelectedDate { get; set; } = DateTime.Today;
+    private void SaveDate()
+    {
+        if (Student == null || SelectedDate == null)
+            return;
+        BMAStudentAttend attend = new BMAStudentAttend(){
+            StudentID = Student.ID,
+            AttendDate=SelectedDate.Value,
+            LoggedDate = DateTime.Now,
+            LoggedBy = User!.UserID
+        };
+        bmaService.CreateAttend(attend);
+        Student.Attends.Add(attend);
+    }
+    private void DeleteDate(BMAStudentAttend attend)
+    {
+        bmaService.DeleteAttend(attend);
+        Student!.Attends.Remove(attend);
+    }
+}

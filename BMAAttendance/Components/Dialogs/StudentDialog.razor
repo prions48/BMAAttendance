@@ -1,0 +1,50 @@
+<MudDialog>
+    <DialogContent>
+        <MudSimpleTable Striped Bordered>
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Name</td>
+                    <td>
+                        <MudTextField @bind-Value="Student.StudentName" Label="Name" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Email</td>
+                    <td>
+                        <MudTextField @bind-Value="Student.EmailAddress" Label="Email" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Phone</td>
+                    <td>
+                        <MudTextField @bind-Value="Student.PhoneNumber" Label="Phone" />
+                    </td>
+                </tr>
+            </tbody>
+        </MudSimpleTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="Submit" Color="Color.Info"
+        Disabled="string.IsNullOrEmpty(Student.StudentName) || string.IsNullOrEmpty(Student.EmailAddress)">Submit</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public MudDialogInstance MudDialog { get; set; }
+    [Parameter] public BMAStudent Student { get; set; } = new BMAStudent();
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+    private void Submit()
+    {
+        MudDialog.Close(DialogResult.Ok(Student));
+    }
+}

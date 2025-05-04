@@ -7,6 +7,7 @@ using BMAAttendance.Data.Email;
 using BMAAttendance.Data.Files;
 using BMAAttendance.Data.Users;
 using Microsoft.EntityFrameworkCore;
+using BMAAttendance.Data.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,8 @@ builder.Services.AddScoped<FileService>();
 builder.Services.AddDbContext<UserContext>(o => o.UseSqlServer(builder.Configuration["ConnectionStrings:SQL"]));
 builder.Services.AddScoped<UserService>();
 
+builder.Services.AddDbContext<BMAContext>(o => o.UseSqlServer(builder.Configuration["ConnectionStrings:SQL"]));
+builder.Services.AddScoped<BMAService>();
 
 var app = builder.Build();
 

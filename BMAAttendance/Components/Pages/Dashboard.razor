@@ -1,0 +1,105 @@
+@page "/"
+@inject BMAService bmaService
+@inject IDialogService dialogService
+@using BMAAttendance.Components.Dialogs
+
+<AuthorizeView>
+    <Authorized>
+        @if (User == null)
+        {
+            <MudText Typo="Typo.h6">Please contact tech support to repair your user configuration.</MudText>
+        }
+        else if (User.SchoolID == null)
+        {
+            <MudText Typo="Typo.h6">Please select the school you are associated with.</MudText>
+            <MudSelect @bind-Value="SelectedSchoolID" T="Guid?" Clearable>
+                @foreach (BMASchool school in Schools)
+                {
+                    <MudSelectItem T="Guid?" Value="@school.ID">@school.SchoolName</MudSelectItem>
+                }
+            </MudSelect>
+            <MudButton OnClick="SetSchool" Variant="Variant.Filled" Color="Color.Info" Disabled="SelectedSchoolID == null">Select School</MudButton>
+        }
+        else
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="CreateStudent">Create Student</MudButton>
+            <MudTable Items="Students" Striped Outlined Context="ctx2">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Email</MudTh>
+                    <MudTh># Attend</MudTh>
+                    <MudTh># Attends Current Rank</MudTh>
+                    <MudTh>View</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@ctx2.StudentName</MudTd>
+                    <MudTd>@ctx2.EmailAddress</MudTd>
+                    <MudTd>@ctx2.Attends.Count</MudTd>
+                    <MudTd>@ctx2.Attends.Count(e => e.AttendDate >= ctx2.DateAwarded)</MudTd>
+                    <MudTd>
+                        <MudIconButton Color="Color.Info" Icon="@Icons.Material.Filled.ArrowOutward" Href="@($"/student/{ctx2.ID}")" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+
+        }
+    </Authorized>
+    <NotAuthorized>
+        <MudText Typo="Typo.h6">You must log in to view this content.</MudText>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter] public BMAUser? User { get; set; }
+    private bool Loaded = false;
+    private List<BMAStudent> Students { get; set; } = [];
+    private List<BMASchool> Schools { get; set; } = [];
+    protected override void OnInitialized()
+    {
+        Schools = bmaService.GetSchools();
+    }
+    protected override void OnParametersSet()
+    {
+        if (!Loaded && User?.SchoolID != null)
+        {
+            Loaded = true;
+            LoadStudents(User.SchoolID.Value);
+        }
+    }
+    private void LoadStudents(Guid schoolid)
+    {
+        Students = bmaService.GetStudentsBySchool(schoolid);
+        SelectedSchoolID = schoolid;
+    }
+    private Guid? SelectedSchoolID { get; set; } = null;
+    private void SetSchool()
+    {
+        if (User != null && SelectedSchoolID != null)
+        {
+            User.SchoolID = SelectedSchoolID;
+            bmaService.UpdateUser(User);
+            LoadStudents(User.SchoolID.Value);
+        }
+    }
+    private async Task CreateStudent()
+    {
+        if (SelectedSchoolID == null)
+            return;
+        var options = new DialogOptions() { CloseOnEscapeKey = true };
+        var parameters = new DialogParameters();
+        //parameters.Add("Power", Clan.Power);
+        var dialog = dialogService.Show<StudentDialog>("Add New Student", parameters, options);
+        var result = await dialog.Result;
+        if (!result!.Canceled)
+        {
+            BMAStudent? student = result.Data as BMAStudent;
+            if (student != null)
+            {
+                student.SchoolID = SelectedSchoolID.Value;
+                bmaService.CreateStudent(student);
+                Students.Add(student);
+            }
+        }
+    }
+
+}

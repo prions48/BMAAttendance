@@ -25,7 +25,7 @@ else
         Sending = true;
         try
         {
-            string result = await emailService.SendEmail(KeyChain.OwnerEmail, "Test email from template", "Enjoy this email!");
+            string result = await emailService.SendEmail(KeyChain.OwnerEmail, $"Test email from {KeyChain.AppName}", "Enjoy this email!");
             Snackbar.Add(result, result == "Succeeded" ? Severity.Success : Severity.Error);
             currentCount++;
         }
