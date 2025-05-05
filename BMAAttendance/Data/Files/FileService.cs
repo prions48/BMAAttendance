@@ -18,6 +18,8 @@ namespace BMAAttendance.Data.Files
             _js = js;
             _settings = settings;
             _service = new BlobServiceClient(_settings.GetConnString());
+            _container = _service.GetBlobContainerClient(KeyChain.Container);
+            _container.CreateIfNotExists();
         }
         /// <summary>
         /// Uploads file to app's default container.  Returns "Success" unless failure occurs
@@ -53,6 +55,22 @@ namespace BMAAttendance.Data.Files
             {
                 _container = _service.GetBlobContainerClient(KeyChain.Container);
                 BlockBlobClient block = _container.GetBlockBlobClient($"{path}/{filename}");
+                MemoryStream stream = new();
+                await block.DownloadToAsync(stream);
+                stream.Position = 0;
+                return (stream,"Success");
+            }
+            catch (Exception ex)
+            {
+                return (null,ex.Message);
+            }
+        }
+        public async Task<(MemoryStream?,string)> DownloadFile(Auth0UserFile file)
+        {
+            try
+            {
+                _container = _service.GetBlobContainerClient(KeyChain.Container);
+                BlockBlobClient block = _container.GetBlockBlobClient($"{file.UserID}/{file.BlobName}");
                 MemoryStream stream = new();
                 await block.DownloadToAsync(stream);
                 stream.Position = 0;

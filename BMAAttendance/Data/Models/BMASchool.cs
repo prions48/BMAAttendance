@@ -7,6 +7,7 @@ namespace BMAAttendance.Data.Models
         [Key] public Guid ID { get; set; }
         public string SchoolName { get; set; } = "";
         public string SchoolAddress { get; set; } = "";
+        public Guid? ImageID { get; set; }
         public BMASchool()
         {
             ID = Guid.NewGuid();

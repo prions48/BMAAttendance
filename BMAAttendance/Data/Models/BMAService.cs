@@ -37,6 +37,11 @@ namespace BMAAttendance.Data.Models
         {
             return _context.BMASchools.ToList();
         }
+        public void UpdateSchool(BMASchool school)
+        {
+            _context.BMASchools.Update(school);
+            _context.SaveChanges();
+        }
         public List<BMAStudent> GetStudentsBySchool(Guid schoolid)
         {
             List<BMAStudent> students = _context.BMAStudents.Where(e => e.SchoolID == schoolid).ToList();
@@ -92,6 +97,11 @@ namespace BMAAttendance.Data.Models
         public void CreateRank(BMARank rank)
         {
             _context.BMARanks.Add(rank);
+            _context.SaveChanges();
+        }
+        public void UpdateRank(BMARank rank)
+        {
+            _context.BMARanks.Update(rank);
             _context.SaveChanges();
         }
         public void DeleteRank(BMARank rank)

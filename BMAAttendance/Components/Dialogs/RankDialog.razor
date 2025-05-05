@@ -1,0 +1,52 @@
+<MudDialog>
+    <DialogContent>
+        <MudSimpleTable Striped Bordered>
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Name*</td>
+                    <td>
+                        <MudTextField @bind-Value="NewRank.RankName" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Description*</td>
+                    <td>
+                        <MudTextField @bind-Value="NewRank.RankDescription" Lines="2" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Color</td>
+                    <td>
+                        <MudColorPicker @bind-Text="NewRank.Color1" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Second Color</td>
+                    <td>
+                        <MudColorPicker @bind-Text="NewRank.Color2" />
+                    </td>
+                </tr>
+            </tbody>
+        </MudSimpleTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="Submit" Disabled="string.IsNullOrEmpty(NewRank.RankName) || string.IsNullOrEmpty(NewRank.RankDescription)">Submit</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public MudDialogInstance MudDialog { get; set; }
+    private BMARank NewRank { get; set; } = new();
+    private void Cancel() => MudDialog.Cancel();
+    private void Submit()
+    {
+        MudDialog.Close(DialogResult.Ok(NewRank));
+    }
+}

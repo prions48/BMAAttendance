@@ -1,0 +1,102 @@
+@inject ISnackbar Snackbar
+@using BMAAttendance.Data.Files
+@inject UserService userService
+@inject FileService fileService
+<MudDialog>
+    <DialogContent>
+        <MudSimpleTable Striped Bordered>
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Name</td>
+                    <td>
+                        <MudTextField @bind-Value="School.SchoolName" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Address</td>
+                    <td>
+                        <MudTextField @bind-Value="School.SchoolAddress" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Image</td>
+                    <td>
+                        <img src="@Image" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Upload</td>
+                    <td>
+                        <InputFile OnChange="Upload" />
+                    </td>
+                </tr>
+            </tbody>
+        </MudSimpleTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Filled">Cancel</MudButton>
+        <MudButton OnClick="Submit" Variant="Variant.Filled">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public MudDialogInstance MudDialog { get; set; }
+    [Parameter] public BMASchool School { get; set; } = new();
+    [Parameter] public BMAUser User { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        if (School?.ImageID != null)
+        {
+            Auth0UserFile? file = userService.GetFileByID(School.ImageID.Value);
+            if (file != null)
+            {
+                var result = await fileService.DownloadFile(file);
+                if (result.Item1 != null)
+                {
+                    string base64 = Convert.ToBase64String(result.Item1.ToArray());
+                    Image = string.Format("data:image/png;base64,{0}", base64);
+                }
+                else
+                Snackbar.Add(result.Item2, Severity.Error);
+            }
+        }
+    }
+    public void Cancel() => MudDialog.Cancel();
+    public void Submit()
+    {
+        MudDialog.Close(DialogResult.Ok(School));
+    }
+    private string? Image { get; set; }
+    private async Task Upload(InputFileChangeEventArgs args)
+    {
+        if (args.File != null && !string.IsNullOrEmpty(args.File.Name) && User != null)
+        {
+            try
+            {
+                var file = args.File.OpenReadStream();
+                MemoryStream stream = new();
+                await file.CopyToAsync(stream);
+                var result = await fileService.UploadFile(User!.UserID,$"{args.File.Name}",stream);
+                if (result.Item2 == "Success" && result.Item1 != null)
+                {
+                    School.ImageID = result.Item1.ID;
+                    string base64 = Convert.ToBase64String(stream.ToArray());
+                    Image = string.Format("data:image/png;base64,{0}", base64);
+                }
+                else
+                    Snackbar.Add(result.Item2,Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+
+        }
+    }
+}

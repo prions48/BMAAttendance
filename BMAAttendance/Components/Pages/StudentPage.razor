@@ -46,8 +46,16 @@
                                             <td>@Student.PhoneNumber</td>
                                         </tr>
                                         <tr>
-                                            <td colspan="2">
-                                                <img src="@QRCodeImg" width="100" />
+                                            <td>QR Code</td>
+                                            <td>
+                                                @if (ViewQR)
+                                                {
+                                                    <img src="@QRCodeImg" width="150" />
+                                                }
+                                                else
+                                                {
+                                                    <MudIconButton Icon="@Icons.Material.TwoTone.RemoveRedEye" Color="Color.Info" OnClick="() => ViewQR = true" />
+                                                }
                                             </td>
                                         </tr>
                                     </tbody>
@@ -102,37 +110,50 @@
                     </MudSimpleTable>
                 </MudItem>
                 <MudItem xs="12" sm="12" md="6" lg="4" xl="4">
-                    <MudStack Row>
-                        <MudToggleIconButton @bind-Toggled="OnlyRecent" Icon="@Icons.Material.TwoTone.AllInclusive" Color="Color.Primary" ToggledIcon="@Icons.Material.TwoTone.CalendarMonth" ToggledColor="Color.Info"  />
-                        <MudText>@(OnlyRecent ? "Only Since Last Promotion" : "All Attendances")</MudText>
-                    </MudStack>
-                    <MudSimpleTable Striped Bordered Dense>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <MudDatePicker @bind-Date="SelectedDate" Clearable Label="Log New" />
-                                </td>
-                                <td>
-                                    <MudIconButton Icon="@Icons.Material.TwoTone.Save" OnClick="SaveDate" Color="Color.Success" Disabled="SelectedDate == null" />
-                                </td>
-                            </tr>
-                            @foreach (BMAStudentAttend attend in Student.Attends.Where(e => e.AttendDate >= Student.DateAwarded || !OnlyRecent).OrderByDescending(e => e.AttendDate))
-                            {
-                                <tr>
-                                    <td>@attend.AttendDate.ToString("MM/dd/yy")</td>
-                                    <td>
-                                        <MudIconButton OnClick="() => DeleteDate(attend)" Color="Color.Error" Icon="@Icons.Material.TwoTone.DeleteForever" />
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </MudSimpleTable>
+                    <MudExpansionPanels>
+                        <MudExpansionPanel>
+                            <TitleContent>
+                                <MudStack Row>
+                                    <MudText>Attendance</MudText>
+                                    <MudSpacer />
+                                    <MudText>Count: @Student.Attends.Count(e => e.AttendDate >= Student.DateAwarded || !OnlyRecent)</MudText>
+                                </MudStack>
+                            </TitleContent>
+                            <ChildContent>
+                                <MudStack Row AlignItems="AlignItems.Center">
+                                    <MudToggleIconButton @bind-Toggled="OnlyRecent" Icon="@Icons.Material.TwoTone.AllInclusive" Color="Color.Primary" ToggledIcon="@Icons.Material.TwoTone.CalendarMonth" ToggledColor="Color.Info"  />
+                                    <MudText>@(OnlyRecent ? "Only Since Last Promotion" : "All Attendances")</MudText>
+                                </MudStack>
+                                <MudSimpleTable Striped Bordered Dense>
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <MudDatePicker @bind-Date="SelectedDate" Clearable Label="Log New" />
+                                            </td>
+                                            <td>
+                                                <MudIconButton Icon="@Icons.Material.TwoTone.Save" OnClick="SaveDate" Color="Color.Success" Disabled="SelectedDate == null" />
+                                            </td>
+                                        </tr>
+                                        @foreach (BMAStudentAttend attend in Student.Attends.Where(e => e.AttendDate >= Student.DateAwarded || !OnlyRecent).OrderByDescending(e => e.AttendDate))
+                                        {
+                                            <tr>
+                                                <td>@attend.AttendDate.ToString("MM/dd/yy")</td>
+                                                <td>
+                                                    <MudIconButton OnClick="() => DeleteDate(attend)" Color="Color.Error" Icon="@Icons.Material.TwoTone.DeleteForever" />
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </MudSimpleTable>
+                            </ChildContent>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
                 </MudItem>
             </MudGrid>
         }
@@ -150,6 +171,7 @@
     private List<BMARank> Ranks { get; set; } = [];
     private List<BMAStudentRank> StudentRanks { get; set; } = [];
     private string? QRCodeImg { get; set; } = null;
+    private bool ViewQR = false;
     protected override void OnInitialized()
     {
         Ranks = bmaService.GetRanks();

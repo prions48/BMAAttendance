@@ -27,6 +27,10 @@ namespace BMAAttendance.Data.Users
         {
             return _context.Auth0UserFiles.FromSqlRaw($"SELECT * FROM [Auth0UserFiles] WHERE [UserID] = '{userid}'").ToList();
         }
+        public Auth0UserFile? GetFileByID(Guid fileid)
+        {
+            return _context.Auth0UserFiles.FirstOrDefault(e => e.ID == fileid);
+        }
         public void RecordLogin(Guid userid)
         {
             AuditLogin login = new AuditLogin()
