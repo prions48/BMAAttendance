@@ -8,20 +8,35 @@
         {
             <MudText Typo="Typo.h6">Please contact tech support to repair your user configuration.</MudText>
         }
-        else if (!User.DashboardAccess)
-        {
-            <MudText Typo="Typo.h6">You do not have access to this resource.</MudText>
-        }
         else if (Student == null)
         {
             <MudText Typo="Typo.h6">Student not found.</MudText>
+        }
+        else if (!User.DashboardAccess && Student.UserID != User.UserID)
+        {
+            <MudText Typo="Typo.h6">You do not have access to this resource.</MudText>
         }
         else
         {
             <MudGrid>
                 <MudItem xs="12" sm="12" md="6" lg="4" xl="4">
                     <MudCard Elevation="1" Outlined>
-                        <MudCardHeader>@Student?.StudentName</MudCardHeader>
+                        <MudCardHeader>
+                            @Student?.StudentName
+                            <MudSpacer />
+                            @if (User.DashboardAccess)
+                            {
+                                @if (Editing)
+                                {
+                                    <MudIconButton Color="Color.Success" Icon="@Icons.Material.TwoTone.Save" OnClick="Save" 
+                                        Disabled="string.IsNullOrEmpty(Student?.StudentName) || string.IsNullOrEmpty(Student.EmailAddress)" />
+                                }
+                                else
+                                {
+                                    <MudIconButton Color="Color.Info" Icon="@Icons.Material.TwoTone.Edit" OnClick="Edit" />
+                                }
+                            }
+                        </MudCardHeader>
                         <MudCardContent>
                             @if (Student != null)
                             {
@@ -35,15 +50,42 @@
                                     <tbody>
                                         <tr>
                                             <td>Name</td>
-                                            <td>@Student.StudentName</td>
+                                            <td>
+                                                @if (Editing)
+                                                {
+                                                    <MudTextField @bind-Value="Student.StudentName" />
+                                                }
+                                                else
+                                                {
+                                                    @Student.StudentName
+                                                }
+                                            </td>
                                         </tr>
                                         <tr>
                                             <td>Email</td>
-                                            <td>@Student.EmailAddress</td>
+                                            <td>
+                                                @if (Editing)
+                                                {
+                                                    <MudTextField @bind-Value="Student.EmailAddress" />
+                                                }
+                                                else
+                                                {
+                                                    @Student.EmailAddress
+                                                }
+                                            </td>
                                         </tr>
                                         <tr>
                                             <td>Phone</td>
-                                            <td>@Student.PhoneNumber</td>
+                                            <td>
+                                                @if (Editing)
+                                                {
+                                                    <MudTextField @bind-Value="Student.PhoneNumber" />
+                                                }
+                                                else
+                                                {
+                                                    @Student.PhoneNumber
+                                                }
+                                            </td>
                                         </tr>
                                         <tr>
                                             <td>QR Code</td>
@@ -60,7 +102,6 @@
                                         </tr>
                                     </tbody>
                                 </MudSimpleTable>
-                                <MudText Typo="Typo.caption">More to come here soon</MudText>
                             }
                             else
                             {
@@ -70,44 +111,51 @@
                     </MudCard>
                 </MudItem>
                 <MudItem xs="12" sm="12" md="6" lg="4" xl="4">
-                    <MudSimpleTable Striped Bordered>
-                        <thead>
-                            <tr>
-                                <th>Rank</th>
-                                <th>Date Promoted</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <MudSelect @bind-Value="PromoteRank" Clearable T="BMARank">
-                                        @foreach (BMARank rank in Ranks.Where(e => e.OrderNumber > (Ranks.FirstOrDefault(f => f.ID == Student.RankID)?.OrderNumber ?? 0)))
-                                        {
-                                            <MudSelectItem Value="rank">@rank.RankName</MudSelectItem>                                            
-                                        }
-                                    </MudSelect>
-                                </td>
-                                <td>
-                                    <MudDatePicker @bind-Date="PromoteDate" Label="Date Awarded" MinDate="Student.DateAwarded" />
-                                </td>
-                                <td>
-                                    <MudButton OnClick="AwardRank" Variant="Variant.Filled" Color="Color.Info"
-                                    Disabled="PromoteDate == null || PromoteRank == null">Award</MudButton>
-                                </td>
-                            </tr>
-                            @foreach (BMAStudentRank rank in StudentRanks.OrderByDescending(e => e.DateAwarded))
-                            {
-                                <tr>
-                                    <td>@Ranks.FirstOrDefault(e => e.ID == rank.RankID)?.RankName</td>
-                                    <td>@rank.DateAwarded.ToString("MM/dd/yy")</td>
-                                    <td>
-                                        <MudIconButton Color="Color.Error" Icon="@Icons.Material.TwoTone.DeleteForever" OnClick="() => DeleteStudentRank(rank)" Disabled="rank.RankID != Student.RankID" />
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </MudSimpleTable>
+                    <MudExpansionPanels>
+                        <MudExpansionPanel Text="@($"Rank: {Ranks.FirstOrDefault(e => e.ID==Student.RankID)?.RankName}")">
+                            <MudSimpleTable Striped Bordered>
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Date Promoted</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (User.DashboardAccess)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <MudSelect @bind-Value="PromoteRank" Clearable T="BMARank">
+                                                    @foreach (BMARank rank in Ranks.Where(e => e.OrderNumber > (Ranks.FirstOrDefault(f => f.ID == Student.RankID)?.OrderNumber ?? 0)))
+                                                    {
+                                                        <MudSelectItem Value="rank">@rank.RankName</MudSelectItem>                                            
+                                                    }
+                                                </MudSelect>
+                                            </td>
+                                            <td>
+                                                <MudDatePicker @bind-Date="PromoteDate" Label="Date Awarded" MinDate="Student.DateAwarded" />
+                                            </td>
+                                            <td>
+                                                <MudButton OnClick="AwardRank" Variant="Variant.Filled" Color="Color.Info"
+                                                Disabled="PromoteDate == null || PromoteRank == null">Award</MudButton>
+                                            </td>
+                                        </tr>
+                                    }
+                                    @foreach (BMAStudentRank rank in StudentRanks.OrderByDescending(e => e.DateAwarded))
+                                    {
+                                        <tr>
+                                            <td>@Ranks.FirstOrDefault(e => e.ID == rank.RankID)?.RankName</td>
+                                            <td>@rank.DateAwarded.ToString("MM/dd/yy")</td>
+                                            <td>
+                                                <MudIconButton Color="Color.Error" Icon="@Icons.Material.TwoTone.DeleteForever" OnClick="() => DeleteStudentRank(rank)" Disabled="rank.RankID != Student.RankID" />
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
                 </MudItem>
                 <MudItem xs="12" sm="12" md="6" lg="4" xl="4">
                     <MudExpansionPanels>
@@ -132,14 +180,17 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>
-                                                <MudDatePicker @bind-Date="SelectedDate" Clearable Label="Log New" />
-                                            </td>
-                                            <td>
-                                                <MudIconButton Icon="@Icons.Material.TwoTone.Save" OnClick="SaveDate" Color="Color.Success" Disabled="SelectedDate == null" />
-                                            </td>
-                                        </tr>
+                                        @if (User.DashboardAccess)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <MudDatePicker @bind-Date="SelectedDate" Clearable Label="Log New" />
+                                                </td>
+                                                <td>
+                                                    <MudIconButton Icon="@Icons.Material.TwoTone.Save" OnClick="SaveDate" Color="Color.Success" Disabled="SelectedDate == null" />
+                                                </td>
+                                            </tr>
+                                        }
                                         @foreach (BMAStudentAttend attend in Student.Attends.Where(e => e.AttendDate >= Student.DateAwarded || !OnlyRecent).OrderByDescending(e => e.AttendDate))
                                         {
                                             <tr>
@@ -264,4 +315,14 @@
         }
     }
     private bool OnlyRecent = true;
+    private bool Editing = false;
+    private void Edit()
+    {
+        Editing = true;
+    }
+    private void Save()
+    {
+        bmaService.UpdateStudent(Student);
+        Editing = false;
+    }
 }

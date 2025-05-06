@@ -30,7 +30,7 @@ namespace BMAAttendance.Data
         {
             get
             {
-                return "prions48@gmail.com";
+                return "berringerma@yahoo.com";
             }
         }
     }

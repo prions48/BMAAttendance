@@ -8,7 +8,7 @@ namespace BMAAttendance.Data.Models
         public Guid? SchoolID { get; set; }
         public string UserName { get; set; } = "";
         public string EmailAddress { get; set; } = "";
-        public bool DashboardAccess { get; set; }
+        public bool DashboardAccess { get; set; } = true;
         public BMAUser()
         {
             
