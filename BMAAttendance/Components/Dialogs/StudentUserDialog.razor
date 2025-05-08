@@ -1,0 +1,57 @@
+@inject BMAService bmaService
+
+<MudDialog>
+    <DialogContent>
+        <MudSimpleTable Striped Bordered>
+            <thead>
+                <tr>
+                    <th>User Name</th>
+                    <th>Match Student</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (BMAStudent student in Students)
+                {
+                    <tr>
+                        <td>@student.StudentName</td>
+                        <td>
+                            <MudSelect @bind-Value="student.UserID" Clearable>
+                                @foreach (BMAUser user in Users.Where(e => !string.IsNullOrEmpty(e.UserName)))
+                                {
+                                    <MudSelectItem Value="user.UserID">@user.UserName</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close" Variant="Variant.Filled">Cancel</MudButton>
+        <MudButton OnClick="Save" Variant="Variant.Filled" Color="Color.Info">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public MudDialogInstance MudDialog { get; set; }
+    [Parameter] public BMAUser? User { get; set; }
+    private List<BMAUser> Users { get; set; } = [];
+    private List<BMAStudent> Students { get; set; } = [];
+    protected override void OnInitialized()
+    {
+        Users = bmaService.GetAllOtherUsers(User?.UserID ?? Guid.Empty);
+        Students = bmaService.GetStudents();
+    }
+    private void Close()
+    {
+        MudDialog.Cancel();
+    }
+    private void Save()
+    {
+        foreach (BMAStudent student in Students)
+            if (student.IsDirty)
+                bmaService.UpdateStudent(student);
+        Close();
+    }
+}

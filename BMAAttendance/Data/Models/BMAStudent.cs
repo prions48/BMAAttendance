@@ -6,7 +6,20 @@ namespace BMAAttendance.Data.Models
     public class BMAStudent
     {
         [Key] public Guid ID { get; set; }
-        public Guid UserID { get; set; }
+        private Guid _userID;
+        public Guid UserID
+        {
+            get
+            {
+                return _userID;
+            }
+            set
+            {
+                if (_userID != value)
+                    _isDirty = true;
+                _userID = value;
+            }
+        }
         public Guid SchoolID { get; set; }
         public string StudentName { get; set; } = "";
         public string EmailAddress { get; set; } = "";
@@ -16,6 +29,15 @@ namespace BMAAttendance.Data.Models
         //[ForeignKey(nameof(BMAStudent.ID))]//let's revisit this later
         [NotMapped] public List<BMAStudentAttend> Attends { get; set; } = [];
         [NotMapped] public List<BMAStudentRank> StudentRanks { get; set; } = [];
+        private bool _isDirty = false;
+        public void Clean() => _isDirty = false;
+        public bool IsDirty
+        {
+            get
+            {
+                return _isDirty;
+            }
+        }
         public BMAStudent()
         {
             ID = Guid.NewGuid();

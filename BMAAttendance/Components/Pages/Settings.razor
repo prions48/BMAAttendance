@@ -23,7 +23,8 @@ else
         {
             <MudButton OnClick="ViewSchool" Variant="Variant.Filled" Color="Color.Primary">View School</MudButton>
             <MudButton OnClick="ViewRanks" Variant="Variant.Filled" Color="Color.Primary">View Ranks</MudButton>
-            <MudButton OnClick="ViewUsers" Variant="Variant.Filled" Color="Color.Secondary">View Users</MudButton>
+            <MudButton OnClick="ViewUsers" Variant="Variant.Filled" Color="Color.Secondary">View Instructor Access</MudButton>
+            <MudButton OnClick="ViewStudents" Variant="Variant.Filled" Color="Color.Secondary">View Student Access</MudButton>
         }
         <MudTextField @bind-Value="User.UserName" Label="Your Name" />
         <MudTextField @bind-Value="User.EmailAddress" Label="Your Email" />
@@ -158,6 +159,14 @@ else
         var parameters = new DialogParameters();
         parameters.Add("User",User);
         var dialog = dialogService.Show<UserDialog>("View & Edit Users", parameters, options);
+        var result = await dialog.Result;
+    }
+    private async Task ViewStudents()
+    {
+        var options = new DialogOptions() { CloseOnEscapeKey = true };
+        var parameters = new DialogParameters();
+        parameters.Add("User",User);
+        var dialog = dialogService.Show<StudentUserDialog>("View Student Access", parameters, options);
         var result = await dialog.Result;
     }
 }

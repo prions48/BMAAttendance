@@ -83,11 +83,13 @@ namespace BMAAttendance.Data.Models
         public void CreateStudent(BMAStudent student)
         {
             _context.BMAStudents.Add(student);
+            student.Clean();
             _context.SaveChanges();
         }
         public void UpdateStudent(BMAStudent student)
         {
             _context.BMAStudents.Update(student);
+            student.Clean();
             _context.SaveChanges();
         }
         #endregion
