@@ -23,12 +23,23 @@ namespace BMAAttendance.Data.Models
                 _context.BMAUsers.Add(user);
                 _context.SaveChanges();
             }
+            if (user.AccessExpire != null && user.AccessExpire < DateTime.Now)
+            {
+                user.AccessExpire = null;
+                user.DashboardAccess = false;
+                _context.BMAUsers.Update(user);
+                _context.SaveChanges();
+            }
             return user;
         }
         public void UpdateUser(BMAUser user)
         {
             _context.BMAUsers.Update(user);
             _context.SaveChanges();
+        }
+        public List<BMAUser> GetAllOtherUsers(Guid userid)
+        {
+            return _context.BMAUsers.Where(e => e.UserID != userid).OrderBy(e => e.UserName).ToList();
         }
         #endregion
 
@@ -41,6 +52,14 @@ namespace BMAAttendance.Data.Models
         {
             _context.BMASchools.Update(school);
             _context.SaveChanges();
+        }
+        /// <summary>
+        /// NOTE: does NOT load attendance/etc.  Currently for home page nav
+        /// </summary>
+        /// <returns>List of all students</returns>
+        public List<BMAStudent> GetStudents()
+        {
+            return _context.BMAStudents.ToList();
         }
         public List<BMAStudent> GetStudentsBySchool(Guid schoolid)
         {

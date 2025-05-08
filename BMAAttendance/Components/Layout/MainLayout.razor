@@ -26,10 +26,12 @@
             @* Put logo here?*@
             <br />
             <MudNavLink Href="/">Home</MudNavLink>
-            <MudNavLink Href="/email">Email</MudNavLink>
-            <MudNavLink Href="/timer">Timer</MudNavLink>
-            <MudNavLink Href="/files">Files</MudNavLink>
-            <MudNavLink Href="/auth">Auth</MudNavLink>
+            <MudNavLink Href="/settings">Settings</MudNavLink>
+            @if (User?.DashboardAccess == true)
+            {
+                <MudNavLink Href="/dashboard">Instructor</MudNavLink>
+            }
+            <MudNavLink Href="/email">Contact</MudNavLink>
         </MudNavMenu>
     </MudDrawer>
     <MudMainContent>
@@ -48,7 +50,7 @@
 @code {
     private MudThemeProvider? Provider { get; set; }
     private bool DarkMode { get; set; }
-    private bool MenuView { get; set; } = true;
+    private bool MenuView { get; set; } = false;
     private Guid UserID { get; set; }
     private string? UserName { get; set; } = null;
     private Auth0User? _user { get; set; } = null;

@@ -1,0 +1,163 @@
+@page "/settings"
+@inject BMAService bmaService
+@inject IDialogService dialogService
+@using BMAAttendance.Components.Dialogs
+
+@if (User == null)
+{
+    <MudText Typo="Typo.h6">Please log in to view settings.</MudText>
+}
+else if (string.IsNullOrEmpty(User.UserName) || string.IsNullOrEmpty(User.EmailAddress))
+{
+    <MudStack>
+        <MudTextField @bind-Value="UserName" Label="Your Name" />
+        <MudTextField @bind-Value="UserEmail" Label="Your Email" />
+        <MudButton OnClick="SaveUser" Variant="Variant.Filled" Color="Color.Info"
+            Disabled="string.IsNullOrEmpty(UserName) || string.IsNullOrEmpty(UserEmail)">Save Profile Info</MudButton>
+    </MudStack>
+}
+else
+{
+    <MudStack>
+        @if (User.DashboardAccess)
+        {
+            <MudButton OnClick="ViewSchool" Variant="Variant.Filled" Color="Color.Primary">View School</MudButton>
+            <MudButton OnClick="ViewRanks" Variant="Variant.Filled" Color="Color.Primary">View Ranks</MudButton>
+            <MudButton OnClick="ViewUsers" Variant="Variant.Filled" Color="Color.Secondary">View Users</MudButton>
+        }
+        <MudTextField @bind-Value="User.UserName" Label="Your Name" />
+        <MudTextField @bind-Value="User.EmailAddress" Label="Your Email" />
+        <MudButton OnClick="SaveUser" Variant="Variant.Filled" Color="Color.Info"
+            Disabled="string.IsNullOrEmpty(User.UserName) || string.IsNullOrEmpty(User.EmailAddress)">Save Profile Info</MudButton>
+    </MudStack>
+}
+
+<MudDialog @bind-Visible="RankDialogView">
+    <TitleContent>View Ranks</TitleContent>
+    <DialogContent>
+        <MudTable Items="Ranks" Striped Bordered RowEditCommit="SaveEdit">
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortBy="new Func<BMARank, object>(x=>x.OrderNumber)" InitialDirection="SortDirection.Ascending">#</MudTableSortLabel></MudTh>
+                <MudTh>Name</MudTh>
+                <MudTh>Description</MudTh>
+                <MudTh>Major Color</MudTh>
+                <MudTh>Second Color</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="#">@context.OrderNumber</MudTd>
+                <MudTd DataLabel="Name">@context.RankName</MudTd>
+                <MudTd DataLabel="Description">@context.RankDescription</MudTd>
+                <MudTd DataLabel="Color 1">
+                    <div style="background-color: @context.Color1;">@context.Color1</div>
+                </MudTd>
+                <MudTd DataLabel="Color 2">
+                    <div style="background-color: @context.Color2;">@context.Color2</div>
+                </MudTd>
+            </RowTemplate>
+            <RowEditingTemplate>
+                <MudTd DataLabel="#">
+                    <MudNumericField @bind-Value="context.OrderNumber" Min="0" HideSpinButtons />
+                </MudTd>
+                <MudTd DataLabel="Name">
+                    <MudTextField @bind-Value="context.RankName" Required />
+                </MudTd>
+                <MudTd DataLabel="Description">
+                    <MudTextField @bind-Value="context.RankDescription" Required />
+                </MudTd>
+                <MudTd DataLabel="Color 1">
+                    <MudColorPicker @bind-Text="context.Color1" Clearable Style="@($"color: {context.Color1}")" />
+                </MudTd>
+                <MudTd DataLabel="Color 2">
+                    <MudColorPicker @bind-Text="context.Color2" Clearable Style="@($"color: {context.Color2}")" />
+                </MudTd>
+            </RowEditingTemplate>
+        </MudTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="AddRank" Variant="Variant.Filled" Color="Color.Info">Add Rank</MudButton>
+        <MudButton OnClick="CloseRanks" Variant="Variant.Filled">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public BMAUser? User { get; set; }
+    private List<BMASchool> Schools { get; set; } = [];
+    private List<BMARank> Ranks { get; set; } = [];
+    protected override void OnInitialized()
+    {
+        Schools = bmaService.GetSchools();
+        Ranks = bmaService.GetRanks();
+    }
+    private async Task AddRank()
+    {
+        var options = new DialogOptions() { CloseOnEscapeKey = true };
+        var parameters = new DialogParameters();
+        var dialog = dialogService.Show<RankDialog>("Add New Rank", parameters, options);
+        var result = await dialog.Result;
+        if (!result!.Canceled)
+        {
+            BMARank? newrank = result.Data as BMARank;
+            if (newrank != null)
+            {
+                newrank.OrderNumber = Ranks.Select(e => e.OrderNumber).Max() + 1;
+                bmaService.CreateRank(newrank);
+                Ranks.Add(newrank);
+            }
+        }
+    }
+    private bool RankDialogView = false;
+    private void ViewRanks()
+    {
+        RankDialogView = true;
+    }
+    private void CloseRanks()
+    {
+        RankDialogView = false;
+    }
+    private void SaveEdit(object rank)
+    {
+        BMARank? bMARank = rank as BMARank;
+        if (bMARank != null)
+            bmaService.UpdateRank(bMARank);
+    }
+    private async Task ViewSchool()
+    {
+        BMASchool? SelectedSchool = Schools.FirstOrDefault(e => e.ID == User?.SchoolID);
+        if (SelectedSchool != null)
+        {
+            var options = new DialogOptions() { CloseOnEscapeKey = true };
+            var parameters = new DialogParameters();
+            parameters.Add("School",SelectedSchool);
+            parameters.Add("User",User);
+            var dialog = dialogService.Show<SchoolDialog>(SelectedSchool?.SchoolName, parameters, options);
+            var result = await dialog.Result;
+            if (!result!.Canceled)
+            {
+                BMASchool? school = result.Data as BMASchool;
+                if (school != null)
+                {
+                    bmaService.UpdateSchool(school);
+                }
+            }
+        }
+    }
+    private string UserName { get; set; } = "";
+    private string UserEmail { get; set; } = "";
+    private void SaveUser()
+    {
+        if (User != null && !string.IsNullOrEmpty(UserName) && !string.IsNullOrEmpty(UserEmail))
+        {
+            User.UserName = UserName;
+            User.EmailAddress = UserEmail;
+            bmaService.UpdateUser(User);
+        }
+    }
+    private async Task ViewUsers()
+    {
+        var options = new DialogOptions() { CloseOnEscapeKey = true };
+        var parameters = new DialogParameters();
+        parameters.Add("User",User);
+        var dialog = dialogService.Show<UserDialog>("View & Edit Users", parameters, options);
+        var result = await dialog.Result;
+    }
+}

@@ -1,20 +1,25 @@
-﻿@page "/todo"
+﻿@page "/"
+@inject NavigationManager navManager
+@inject BMAService bmaService
 
-<PageTitle>Home</PageTitle>
+<h1>Berringer Martial Arts</h1>
 
-<h1>Hello, world!</h1>
+<MudText>Please log in for more information.</MudText>
 
-<MudText>My inaugural side project by request!  Building an attendance tracker for Berringer Martial Arts</MudText>
+@code {
+    [CascadingParameter] public BMAUser? User { get; set; }
+    private List<BMAStudent> Students { get; set; } = [];
+    protected override void OnInitialized()
+    {
+        Students = bmaService.GetStudents();
+    }
+    protected override void OnParametersSet()
+    {
+        if (User != null && Students.Any(e => e.UserID == User.UserID))
+        {
+            BMAStudent student = Students.FirstOrDefault(e => e.UserID == User.UserID)!;
+            navManager.NavigateTo($"/student/{student.ID}", true);
+        }
+    }
+}
 
-<MudTreeView AutoExpand="true" ExpandOnClick="true" T="string" ReadOnly>
-    <MudTreeViewItem Text="Completed" Expanded>
-        <MudTreeViewItem Text="V3 Template setup" />
-    </MudTreeViewItem>
-    <MudTreeViewItem Text="To Do" Expanded>
-        <MudTreeViewItem Text="Auth0 setup" />
-        <MudTreeViewItem Text="Design" />
-        <MudTreeViewItem Text="Model for student" />
-        <MudTreeViewItem Text="Link-based tracking" />
-        <MudTreeViewItem Text="QR Code" />
-    </MudTreeViewItem>
-</MudTreeView> 

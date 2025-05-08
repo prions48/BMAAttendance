@@ -4,12 +4,14 @@ CREATE TABLE BMAUsers (
     EmailAddress NVARCHAR(1000) NOT NULL,
     DashboardAccess BIT NOT NULL,
     SchoolID UNIQUEIDENTIFIER NULL,
+    AccessExpire DATETIME NULL
     PRIMARY KEY (UserID)
 );
 CREATE TABLE BMASchools (
     ID UNIQUEIDENTIFIER NOT NULL,
     SchoolName NVARCHAR(1000) NOT NULL,
     SchoolAddress NVARCHAR(1000) NOT NULL,
+    ImageID UNIQUEIDENTIFIER NULL,
     PRIMARY KEY (ID)
 );
 CREATE TABLE BMAStudents (
@@ -27,6 +29,7 @@ CREATE TABLE BMARanks (
     ID UNIQUEIDENTIFIER NOT NULL,
     RankName NVARCHAR(1000) NOT NULL,
     RankDescription NVARCHAR(1000) NULL,
+    OrderNumber INT NOT NULL,
     Color1 NVARCHAR(100) NULL,
     Color2 NVARCHAR(100) NULL,
     PRIMARY KEY (ID)
@@ -60,3 +63,14 @@ CREATE TABLE BMAEvents (
     PRIMARY KEY (ID)
 )
 */
+SELECT * FROM BMASchools
+INSERT INTO BMASchools VALUES
+(NEWID(),'Berringer Martial Arts','804 Glastell St. Unit 170 Conroe, TX 77304')
+
+SELECT * FROM BMAUsers
+SELECT * FROM BMAStudentAttends
+SELECT * FROM BMARanks
+INSERT INTO BMARanks VALUES
+(NEWID(),'White Belt','Entry level',1,NULL,NULL),
+(NEWID(),'Orange Belt','Some growth',2,NULL,NULL),
+(NEWID(),'Green Belt','Entering the summer',3,NULL,NULL);

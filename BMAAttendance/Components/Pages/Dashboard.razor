@@ -1,4 +1,4 @@
-@page "/"
+@page "/dashboard"
 @inject BMAService bmaService
 @inject IDialogService dialogService
 @using BMAAttendance.Components.Dialogs
@@ -20,12 +20,14 @@
             </MudSelect>
             <MudButton OnClick="SetSchool" Variant="Variant.Filled" Color="Color.Info" Disabled="SelectedSchoolID == null">Select School</MudButton>
         }
+        else if (!User.DashboardAccess)
+        {
+            <MudText Typo="Typo.h6">You do not have access to the instructor dashboard.</MudText>
+        }
         else
         {
             <MudStack Row>
                 <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="CreateStudent">Create Student</MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ViewSchool">View School</MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ViewRanks">View Ranks</MudButton>
             </MudStack>
             <MudTable Items="Students" Striped Outlined Context="ctx2">
                 <HeaderContent>
@@ -54,53 +56,6 @@
         <MudText Typo="Typo.h6">You must log in to view this content.</MudText>
     </NotAuthorized>
 </AuthorizeView>
-
-<MudDialog @bind-Visible="RankDialogView">
-    <TitleContent>View Ranks</TitleContent>
-    <DialogContent>
-        <MudTable Items="Ranks" Striped Bordered RowEditCommit="SaveEdit">
-            <HeaderContent>
-                <MudTh><MudTableSortLabel SortBy="new Func<BMARank, object>(x=>x.OrderNumber)" InitialDirection="SortDirection.Ascending">#</MudTableSortLabel></MudTh>
-                <MudTh>Name</MudTh>
-                <MudTh>Description</MudTh>
-                <MudTh>Major Color</MudTh>
-                <MudTh>Second Color</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="#">@context.OrderNumber</MudTd>
-                <MudTd DataLabel="Name">@context.RankName</MudTd>
-                <MudTd DataLabel="Description">@context.RankDescription</MudTd>
-                <MudTd DataLabel="Color 1">
-                    <div style="background-color: @context.Color1;">@context.Color1</div>
-                </MudTd>
-                <MudTd DataLabel="Color 2">
-                    <div style="background-color: @context.Color2;">@context.Color2</div>
-                </MudTd>
-            </RowTemplate>
-            <RowEditingTemplate>
-                <MudTd DataLabel="#">
-                    <MudNumericField @bind-Value="context.OrderNumber" Min="0" HideSpinButtons />
-                </MudTd>
-                <MudTd DataLabel="Name">
-                    <MudTextField @bind-Value="context.RankName" Required />
-                </MudTd>
-                <MudTd DataLabel="Description">
-                    <MudTextField @bind-Value="context.RankDescription" Required />
-                </MudTd>
-                <MudTd DataLabel="Color 1">
-                    <MudColorPicker @bind-Text="context.Color1" Clearable Style="@($"color: {context.Color1}")" />
-                </MudTd>
-                <MudTd DataLabel="Color 2">
-                    <MudColorPicker @bind-Text="context.Color2" Clearable Style="@($"color: {context.Color2}")" />
-                </MudTd>
-            </RowEditingTemplate>
-        </MudTable>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="AddRank" Variant="Variant.Filled" Color="Color.Info">Add Rank</MudButton>
-        <MudButton OnClick="CloseRanks" Variant="Variant.Filled">Close</MudButton>
-    </DialogActions>
-</MudDialog>
 
 @code {
     [CascadingParameter] public BMAUser? User { get; set; }
@@ -156,57 +111,6 @@
             }
         }
     }
-    private async Task ViewSchool()
-    {
-        BMASchool? SelectedSchool = Schools.FirstOrDefault(e => e.ID == SelectedSchoolID);
-        if (SelectedSchool != null)
-        {
-            var options = new DialogOptions() { CloseOnEscapeKey = true };
-            var parameters = new DialogParameters();
-            parameters.Add("School",SelectedSchool);
-            parameters.Add("User",User);
-            var dialog = dialogService.Show<SchoolDialog>(SelectedSchool?.SchoolName, parameters, options);
-            var result = await dialog.Result;
-            if (!result!.Canceled)
-            {
-                BMASchool? school = result.Data as BMASchool;
-                if (school != null)
-                {
-                    bmaService.UpdateSchool(school);
-                }
-            }
-        }
-    }
-    private async Task AddRank()
-    {
-        var options = new DialogOptions() { CloseOnEscapeKey = true };
-        var parameters = new DialogParameters();
-        var dialog = dialogService.Show<RankDialog>("Add New Rank", parameters, options);
-        var result = await dialog.Result;
-        if (!result!.Canceled)
-        {
-            BMARank? newrank = result.Data as BMARank;
-            if (newrank != null)
-            {
-                newrank.OrderNumber = Ranks.Select(e => e.OrderNumber).Max() + 1;
-                bmaService.CreateRank(newrank);
-                Ranks.Add(newrank);
-            }
-        }
-    }
-    private bool RankDialogView = false;
-    private void ViewRanks()
-    {
-        RankDialogView = true;
-    }
-    private void CloseRanks()
-    {
-        RankDialogView = false;
-    }
-    private void SaveEdit(object rank)
-    {
-        BMARank? bMARank = rank as BMARank;
-        if (bMARank != null)
-            bmaService.UpdateRank(bMARank);
-    }
+    
+    
 }

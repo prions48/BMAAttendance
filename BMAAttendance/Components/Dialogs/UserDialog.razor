@@ -1,0 +1,81 @@
+@inject BMAService bmaService
+@inject ISnackbar Snackbar
+<MudDialog>
+    <DialogContent>
+        <MudDatePicker @bind-Date="SelectedDate" Label="Date for Access Expiration" />
+        <MudSimpleTable>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Perm Access</th>
+                    <th>Tmp Access</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (BMAUser user in Users)
+                {
+                    <tr>
+                        <td>@user.UserName</td>
+                        <td>
+                            @if (user.DashboardAccess && user.AccessExpire == null)
+                            {
+                                <MudIconButton Color="Color.Error" Icon="@Icons.Material.Filled.RemoveCircle" OnClick="() => UnPerm(user)" />
+                            }
+                            else
+                            {
+                                <MudIconButton Color="Color.Success" Icon="@Icons.Material.Filled.AddCircle" OnClick="() => Perm(user)" />
+                            }
+                        </td>
+                        <td>
+                            @if (!user.DashboardAccess || user.AccessExpire != null)
+                            {
+                                <MudIconButton Color="Color.Warning" Icon="@Icons.Material.Filled.AddCircle" OnClick="() => Tmp(user)" Disabled="SelectedDate == null" />
+                            }
+                            @user.AccessExpire?.ToString("MM/dd/yy")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public MudDialogInstance MudDialog { get; set; }
+    [Parameter] public BMAUser? User { get; set; }
+    private List<BMAUser> Users { get; set; } = [];
+    protected override void OnInitialized()
+    {
+        Users = bmaService.GetAllOtherUsers(User?.UserID ?? Guid.Empty);
+    }
+    private void Close()
+    {
+        MudDialog.Cancel();
+    }
+    private void Perm(BMAUser user)
+    {
+        user.DashboardAccess = true;
+        user.AccessExpire = null;
+        bmaService.UpdateUser(user);
+        Snackbar.Add((string.IsNullOrEmpty(user.UserName) ? "User #" +user.UserID : user.UserName) + " has been granted permanent access", Severity.Info);
+    }
+    private void UnPerm(BMAUser user)
+    {
+        user.DashboardAccess = false;
+        bmaService.UpdateUser(user);
+        Snackbar.Add((string.IsNullOrEmpty(user.UserName) ? "User #" +user.UserID : user.UserName) + " has had access removed", Severity.Info);
+    }
+    private DateTime? SelectedDate { get; set; } = DateTime.Today.AddDays(2);
+    private void Tmp(BMAUser user)
+    {
+        if (SelectedDate == null)
+            return;
+        user.DashboardAccess = true;
+        user.AccessExpire = SelectedDate.Value.AddDays(1);
+        bmaService.UpdateUser(user);
+        Snackbar.Add((string.IsNullOrEmpty(user.UserName) ? "User #" +user.UserID : user.UserName) + " has been granted access until " + SelectedDate.Value.ToString("MM/dd/yy"), Severity.Info);
+    }
+}
