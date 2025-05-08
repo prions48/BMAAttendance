@@ -28,6 +28,7 @@
         {
             <MudStack Row>
                 <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="CreateStudent">Create Student</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LogAttendance">Log Attendance</MudButton>
             </MudStack>
             <MudTable Items="Students" Striped Outlined Context="ctx2">
                 <HeaderContent>
@@ -110,6 +111,15 @@
                 Students.Add(student);
             }
         }
+    }
+    private async Task LogAttendance()
+    {
+        var options = new DialogOptions() { CloseOnEscapeKey = true };
+        var parameters = new DialogParameters();
+        parameters.Add("User", User);
+        parameters.Add("Students", Students);
+        var dialog = dialogService.Show<AttendanceDialog>("Log Attendance", parameters, options);
+        var result = await dialog.Result;
     }
     
     

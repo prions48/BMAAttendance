@@ -26,6 +26,15 @@ namespace BMAAttendance.Data.Models
         public string? PhoneNumber { get; set; }
         public Guid? RankID { get; set; }
         public DateTime? DateAwarded { get; set; }
+        public DateTime LastAttended
+        {
+            get
+            {
+                if (Attends == null || Attends.Count == 0)
+                    return DateTime.MinValue;
+                return Attends.MaxBy(e => e.AttendDate)!.AttendDate;
+            }
+        }
         //[ForeignKey(nameof(BMAStudent.ID))]//let's revisit this later
         [NotMapped] public List<BMAStudentAttend> Attends { get; set; } = [];
         [NotMapped] public List<BMAStudentRank> StudentRanks { get; set; } = [];

@@ -1,0 +1,43 @@
+@inject BMAService bmaService
+
+<MudDialog>
+    <DialogContent>
+        <MudDatePicker @bind-Date="SelectedDate" Label="Date of Class" />
+        <MudTable Items="Students" Striped Bordered>
+            <HeaderContent>
+                <MudTh>Name</MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<BMAStudent, object>(x=>x.LastAttended)" InitialDirection="SortDirection.Descending">Last Attended</MudTableSortLabel></MudTh>
+                <MudTh>Attend</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.StudentName</MudTd>
+                <MudTd>@context.Attends.MaxBy(e => e.AttendDate)?.AttendDate.ToString("MM/dd/yy")</MudTd>
+                <MudTd>
+                    <MudIconButton OnClick="() => Attend(context)" Icon="@Icons.Material.TwoTone.AddCircle" Color="Color.Success"
+                        Disabled="SelectedDate == null || context.Attends.Any(e => e.AttendDate == SelectedDate)" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </DialogContent>
+    <DialogActions></DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public MudDialogInstance MudDialog { get; set; }
+    [Parameter] public BMAUser? User { get; set; }
+    [Parameter] public List<BMAStudent> Students { get; set; } = [];
+    private DateTime? SelectedDate { get; set; } = DateTime.Today;
+    private void Attend(BMAStudent student)
+    {
+        if (SelectedDate == null)
+            return;
+        BMAStudentAttend attend = new BMAStudentAttend(){
+            StudentID = student.ID,
+            AttendDate=SelectedDate.Value,
+            LoggedDate = DateTime.Now,
+            LoggedBy = User!.UserID
+        };
+        bmaService.CreateAttend(attend);
+        student.Attends.Add(attend);
+    }
+}
