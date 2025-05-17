@@ -1,6 +1,7 @@
 @page "/student/{studentid}"
 @inject BMAService bmaService
 @using QRCoder
+@using BMAAttendance.Components
 
 <AuthorizeView>
     <Authorized>
@@ -127,7 +128,7 @@
                                         <tr>
                                             <td>
                                                 <MudSelect @bind-Value="PromoteRank" Clearable T="BMARank">
-                                                    @foreach (BMARank rank in Ranks.Where(e => e.OrderNumber > (Ranks.FirstOrDefault(f => f.ID == Student.RankID)?.OrderNumber ?? 0)))
+                                                    @foreach (BMARank rank in Ranks.Where((e => e.OrderNumber > (Ranks.FirstOrDefault(f => f.ID == Student.RankID)?.OrderNumber ?? 0))).OrderBy(e => e.OrderNumber))
                                                     {
                                                         <MudSelectItem Value="rank">@rank.RankName</MudSelectItem>                                            
                                                     }
@@ -145,7 +146,13 @@
                                     @foreach (BMAStudentRank rank in StudentRanks.OrderByDescending(e => e.DateAwarded))
                                     {
                                         <tr>
-                                            <td>@Ranks.FirstOrDefault(e => e.ID == rank.RankID)?.RankName</td>
+                                            <td>
+                                                <MudStack Row>
+                                                    @Ranks.FirstOrDefault(e => e.ID == rank.RankID)?.RankName
+                                                    <BeltColors Rank="Ranks.FirstOrDefault(e => e.ID == rank.RankID)" Size="BeltColors.BeltSize.small" />
+                                                </MudStack>
+
+                                            </td>
                                             <td>@rank.DateAwarded.ToString("MM/dd/yy")</td>
                                             <td>
                                                 <MudIconButton Color="Color.Error" Icon="@Icons.Material.TwoTone.DeleteForever" OnClick="() => DeleteStudentRank(rank)" Disabled="rank.RankID != Student.RankID" />
@@ -266,7 +273,7 @@
     }
     private BMARank? PromoteRank { get; set; }
     private DateTime? PromoteDate { get; set; } = DateTime.Today;
-    private void AwardRank()
+    private async Task AwardRank()
     {
         if (PromoteRank == null || PromoteDate == null || Student == null)
             return;
@@ -284,8 +291,14 @@
         bmaService.UpdateStudent(Student);
         PromoteDate = null;
         PromoteRank = null;
+        List<BMAStudentRank> ranks = StudentRanks;
+        StudentRanks = [];
+        StateHasChanged();
+        await Task.Delay(1);
+        foreach (BMAStudentRank rank in ranks)
+            StudentRanks.Add(rank);
     }
-    private void DeleteStudentRank(BMAStudentRank studentrank)
+    private async Task DeleteStudentRank(BMAStudentRank studentrank)
     {
         if (Student == null)
             return;
@@ -313,6 +326,13 @@
                 }
             }
         }
+        bmaService.UpdateStudent(Student);
+        List<BMAStudentRank> ranks = StudentRanks;
+        StudentRanks = [];
+        StateHasChanged();
+        await Task.Delay(1);
+        foreach (BMAStudentRank rank in ranks)
+            StudentRanks.Add(rank);
     }
     private bool OnlyRecent = true;
     private bool Editing = false;

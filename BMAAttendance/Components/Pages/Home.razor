@@ -1,6 +1,7 @@
 ﻿@page "/"
 @inject NavigationManager navManager
 @inject BMAService bmaService
+@inject ISnackbar Snackbar
 
 <h1>Berringer Martial Arts</h1>
 
@@ -15,10 +16,24 @@
     }
     protected override void OnParametersSet()
     {
-        if (User != null && Students.Any(e => e.UserID == User.UserID))
+        try
         {
-            BMAStudent student = Students.FirstOrDefault(e => e.UserID == User.UserID)!;
-            navManager.NavigateTo($"/student/{student.ID}", true);
+            if (User != null)
+            {
+                if (Students.Any(e => e.UserID == User.UserID))
+                {
+                    BMAStudent student = Students.FirstOrDefault(e => e.UserID == User.UserID)!;
+                    navManager.NavigateTo($"/student/{student.ID}", true);
+                }
+                else if (User.DashboardAccess)
+                {
+                    navManager.NavigateTo("/dashboard",true);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 }

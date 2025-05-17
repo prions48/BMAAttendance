@@ -1,0 +1,62 @@
+
+<div class="d-flex flex-box">
+    <div id="@ID1"></div>
+    <div id="@ID2"></div>
+</div>
+
+@code {
+    [Parameter] public BeltSize? Size { get; set; } = BeltSize.small;
+    [Parameter] public BMARank Rank { get; set; }
+    public string? Color1 { get; set; }
+    public string? Color2 { get; set; }
+    protected override void OnInitialized()
+    {
+        if (Rank != null)
+        {
+            Color1 = Rank.Color1;
+            Color2 = Rank.Color2;
+        }
+    }
+    private string ID1 => "square1_"+Rank.ID.ToString();
+    private string ID2 => "square2_"+Rank.ID.ToString();
+
+    public enum BeltSize
+    {
+        small,
+        medium,
+        large
+    }
+    private string VertSize()
+    {
+        switch (Size)
+        {
+            case BeltSize.small: return "20";
+            case BeltSize.medium: return "50";
+            case BeltSize.large: return "100";
+            default: return "100";
+        }
+    }
+    private string HorizSize()
+    {
+        switch (Size)
+        {
+            case BeltSize.small: return "10";
+            case BeltSize.medium: return "25";
+            case BeltSize.large: return "50";
+            default: return "50";
+        }
+    }
+}
+
+<style>
+    #@ID1 {
+        width: @(HorizSize())px;
+        height: @(VertSize())px;
+        background: @Color1;
+    }
+    #@ID2 {
+        width: @(HorizSize())px;
+        height: @(VertSize())px;
+        background: @(string.IsNullOrEmpty(Color2) ? Color1 : Color2);
+    }
+</style>

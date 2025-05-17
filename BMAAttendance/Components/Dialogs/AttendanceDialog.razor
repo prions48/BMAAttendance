@@ -3,21 +3,35 @@
 <MudDialog>
     <DialogContent>
         <MudDatePicker @bind-Date="SelectedDate" Label="Date of Class" />
-        <MudTable Items="Students" Striped Bordered>
-            <HeaderContent>
-                <MudTh>Name</MudTh>
-                <MudTh><MudTableSortLabel SortBy="new Func<BMAStudent, object>(x=>x.LastAttended)" InitialDirection="SortDirection.Descending">Last Attended</MudTableSortLabel></MudTh>
-                <MudTh>Attend</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd>@context.StudentName</MudTd>
-                <MudTd>@context.Attends.MaxBy(e => e.AttendDate)?.AttendDate.ToString("MM/dd/yy")</MudTd>
-                <MudTd>
-                    <MudIconButton OnClick="() => Attend(context)" Icon="@Icons.Material.TwoTone.AddCircle" Color="Color.Success"
-                        Disabled="SelectedDate == null || context.Attends.Any(e => e.AttendDate == SelectedDate)" />
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
+        <MudStack Row>
+            <MudIconButton Icon="@Icons.Material.TwoTone.SortByAlpha" OnClick="() => SetSortType(SortType.Alphabetical)" Color="Sort == SortType.Alphabetical ? Color.Info : Color.Default" />
+            <MudIconButton Icon="@Icons.Material.TwoTone.Numbers" OnClick="() => SetSortType(SortType.ByRank)" Color="Sort == SortType.ByRank ? Color.Info : Color.Default" />
+            <MudIconButton Icon="@Icons.Material.TwoTone.CalendarMonth" OnClick="() => SetSortType(SortType.LastAttend)" Color="Sort == SortType.LastAttend ? Color.Info : Color.Default" />
+            <MudToggleIconButton Icon="@Icons.Material.TwoTone.ArrowUpward" ToggledIcon="@Icons.Material.TwoTone.ArrowDownward"
+                Color="Color.Secondary" ToggledColor="Color.Primary" @bind-Toggled="SortDescend" />
+        </MudStack>
+        <MudSimpleTable Striped Bordered Dense>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Rank</th>
+                    <th>Last Attend</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (BMAStudent student in StudentQuery())
+                {
+                    <tr>
+                        <td>@student.StudentName</td>
+                        <td>@Ranks.FirstOrDefault(e => e.ID == student.RankID)?.RankName</td>
+                        <td>@(student.LastAttended > DateTime.MinValue ? student.LastAttended.ToString("MM/dd/yy") : "")</td>
+                        <td><MudIconButton OnClick="() => Attend(student)" Icon="@Icons.Material.TwoTone.AddCircle" Color="Color.Success"
+                        Disabled="SelectedDate == null || student.Attends.Any(e => e.AttendDate == SelectedDate)" /></td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
     </DialogContent>
     <DialogActions></DialogActions>
 </MudDialog>
@@ -26,6 +40,17 @@
     [CascadingParameter] public MudDialogInstance MudDialog { get; set; }
     [Parameter] public BMAUser? User { get; set; }
     [Parameter] public List<BMAStudent> Students { get; set; } = [];
+    private List<BMARank> Ranks { get; set; } = [];
+    private SortType Sort = SortType.Alphabetical;
+    private bool SortDescend = false;
+    protected override void OnInitialized()
+    {
+        Ranks = bmaService.GetRanks();
+    }
+    private void SetSortType(SortType type)
+    {
+        Sort = type;
+    }
     private DateTime? SelectedDate { get; set; } = DateTime.Today;
     private void Attend(BMAStudent student)
     {
@@ -39,5 +64,31 @@
         };
         bmaService.CreateAttend(attend);
         student.Attends.Add(attend);
+    }
+    private IOrderedEnumerable<BMAStudent> StudentQuery()
+    {
+        if (Sort == SortType.ByRank)
+            foreach (BMAStudent student in Students)
+                student.CurerntRank = Ranks.FirstOrDefault(e => e.ID == student.RankID);
+        if (SortDescend)
+        {
+            if (Sort == SortType.Alphabetical)
+                return Students.OrderByDescending(e => e.StudentName);
+            if (Sort == SortType.ByRank)
+                return Students.OrderByDescending(e => e.CurerntRank?.OrderNumber);
+            if (Sort == SortType.LastAttend)
+                return Students.OrderByDescending(e => e.LastAttended);
+        }
+        if (Sort == SortType.Alphabetical)
+            return Students.OrderBy(e => e.StudentName);
+        if (Sort == SortType.ByRank)
+            return Students.OrderBy(e => e.CurerntRank?.OrderNumber);
+        return Students.OrderBy(e => e.LastAttended);
+    }
+    public enum SortType
+    {
+        Alphabetical,
+        ByRank,
+        LastAttend
     }
 }
