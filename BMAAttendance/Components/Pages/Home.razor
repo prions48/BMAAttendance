@@ -22,7 +22,7 @@
                             @Students.FirstOrDefault(e => e.ID == student.StudentID)?.StudentName
                         </td>
                         <td>
-                            <MudIconButton Icon="@Icons.Material.Filled.ArrowOutward" Href="@($"/students/{student.StudentID}")" Color="Color.Primary" />
+                            <MudIconButton Icon="@Icons.Material.Filled.ArrowOutward" Href="@($"/student/{student.StudentID}")" Color="Color.Primary" />
                         </td>
                     </tr>
                 }
@@ -52,9 +52,13 @@
                 {
                     navManager.NavigateTo("/dashboard",true);
                 }
+                else if (string.IsNullOrEmpty(User.UserName))
+                {
+                    navManager.NavigateTo("/settings", true);
+                }
                 else if (User.Students.Count == 1)
                 {
-                    navManager.NavigateTo($"/students/{User.Students[0].StudentID}", true);
+                    navManager.NavigateTo($"/student/{User.Students[0].StudentID}", true);
                 }
             }
             

@@ -27,11 +27,16 @@
                             }
                         </td>
                         <td>
-                            @if (!user.DashboardAccess || user.AccessExpire != null)
+                            @if (!user.DashboardAccess)
                             {
                                 <MudIconButton Color="Color.Warning" Icon="@Icons.Material.Filled.AddCircle" OnClick="() => Tmp(user)" Disabled="SelectedDate == null" />
                             }
-                            @user.AccessExpire?.ToString("MM/dd/yy")
+                            else if (user.AccessExpire != null)
+                            {
+                                <MudIconButton Color="Color.Warning" Icon="@Icons.Material.Filled.AddCircle" OnClick="() => Tmp(user)" Disabled="SelectedDate == null || user.AccessExpire.Value.AddDays(-1) == SelectedDate" />
+                                <MudIconButton Color="Color.Error" Icon="@Icons.Material.Filled.RemoveCircle" OnClick="() => UnPerm(user)" />
+                            }
+                            @user.AccessExpire?.AddDays(-1).ToString("MM/dd/yy")
                         </td>
                     </tr>
                 }
@@ -65,6 +70,7 @@
     private void UnPerm(BMAUser user)
     {
         user.DashboardAccess = false;
+        user.AccessExpire = null;
         bmaService.UpdateUser(user);
         Snackbar.Add((string.IsNullOrEmpty(user.UserName) ? "User #" +user.UserID : user.UserName) + " has had access removed", Severity.Info);
     }
