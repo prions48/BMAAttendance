@@ -18,14 +18,16 @@ else if (string.IsNullOrEmpty(User.UserName) || string.IsNullOrEmpty(User.EmailA
 }
 else
 {
+    @if (User.DashboardAccess)
+    {
+        <MudStack Row Wrap="Wrap.Wrap">
+            <MudButton OnClick="ViewSchool" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.TwoTone.BusinessCenter">View School</MudButton>
+            <MudButton OnClick="ViewRanks" Variant="Variant.Filled" Color="Color.Dark" StartIcon="@Icons.Material.TwoTone.FormatListNumbered">View Ranks</MudButton>
+            <MudButton OnClick="ViewUsers" Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.TwoTone.PersonAdd" >View Instructor Access</MudButton>
+            <MudButton OnClick="ViewStudents" Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.TwoTone.People">View Student Access</MudButton>
+        </MudStack>
+    }
     <MudStack>
-        @if (User.DashboardAccess)
-        {
-            <MudButton OnClick="ViewSchool" Variant="Variant.Filled" Color="Color.Primary">View School</MudButton>
-            <MudButton OnClick="ViewRanks" Variant="Variant.Filled" Color="Color.Primary">View Ranks</MudButton>
-            <MudButton OnClick="ViewUsers" Variant="Variant.Filled" Color="Color.Secondary">View Instructor Access</MudButton>
-            <MudButton OnClick="ViewStudents" Variant="Variant.Filled" Color="Color.Secondary">View Student Access</MudButton>
-        }
         <MudTextField @bind-Value="User.UserName" Label="Your Name" />
         <MudTextField @bind-Value="User.EmailAddress" Label="Your Email" />
         <MudButton OnClick="SaveUser" Variant="Variant.Filled" Color="Color.Info"
