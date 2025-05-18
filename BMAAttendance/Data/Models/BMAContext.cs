@@ -14,6 +14,7 @@ namespace BMAAttendance.Data.Models
         public DbSet<BMARank> BMARanks { get; set; }
         public DbSet<BMAStudentAttend> BMAStudentAttends { get; set; }
         public DbSet<BMASchool> BMASchools { get; set; }
+        public DbSet<BMAStudentUser> BMAStudentUsers { get; set; }
 
         //Navigation Properties are hard :(  )
         /*protected override void OnModelCreating(ModelBuilder modelBuilder)

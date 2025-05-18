@@ -11,7 +11,10 @@
                 <tr>
                     <td>Name</td>
                     <td>
-                        <MudTextField @bind-Value="Student.StudentName" Label="Name" />
+                        <MudStack Row>
+                            <MudTextField @bind-Value="Student.FirstName" Label="First Name" />
+                            <MudTextField @bind-Value="Student.LastName" Label="Last Name" />
+                        </MudStack>
                     </td>
                 </tr>
                 <tr>

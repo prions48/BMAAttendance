@@ -30,6 +30,7 @@ namespace BMAAttendance.Data.Models
                 _context.BMAUsers.Update(user);
                 _context.SaveChanges();
             }
+            user.Students = _context.BMAStudentUsers.Where(e => e.UserID == user.UserID).ToList();
             return user;
         }
         public void UpdateUser(BMAUser user)
@@ -39,7 +40,29 @@ namespace BMAAttendance.Data.Models
         }
         public List<BMAUser> GetAllOtherUsers(Guid userid)
         {
-            return _context.BMAUsers.Where(e => e.UserID != userid).OrderBy(e => e.UserName).ToList();
+            List<BMAUser> users = _context.BMAUsers.Where(e => e.UserID != userid).OrderBy(e => e.UserName).ToList();
+            List<BMAStudentUser> stusers = _context.BMAStudentUsers.ToList();
+            foreach (BMAUser user in users)
+                user.Students = stusers.Where(e => e.UserID == user.UserID).ToList();
+            return users;
+        }
+        public List<BMAUser> GetNonInstructorUsers()
+        {
+            List<BMAUser> users = _context.BMAUsers.Where(e => !e.DashboardAccess && !string.IsNullOrEmpty(e.UserName)).OrderBy(e => e.UserName).ToList();
+            List<BMAStudentUser> stusers = _context.BMAStudentUsers.ToList();
+            foreach (BMAUser user in users)
+                user.Students = stusers.Where(e => e.UserID == user.UserID).ToList();
+            return users;
+        }
+        public void CreateStudentUser(BMAStudentUser user)
+        {
+            _context.BMAStudentUsers.Add(user);
+            _context.SaveChanges();
+        }
+        public void DeleteStudentUser(BMAStudentUser user)
+        {
+            _context.BMAStudentUsers.Remove(user);
+            _context.SaveChanges();
         }
         #endregion
 

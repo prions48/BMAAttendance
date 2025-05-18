@@ -13,7 +13,7 @@
         {
             <MudText Typo="Typo.h6">Student not found.</MudText>
         }
-        else if (!User.DashboardAccess && Student.UserID != User.UserID)
+        else if (!User.DashboardAccess && !User.Students.Any(e => e.StudentID == Student.ID))
         {
             <MudText Typo="Typo.h6">You do not have access to this resource.</MudText>
         }
@@ -25,7 +25,7 @@
                         <MudCardHeader>
                             @Student?.StudentName
                             <MudSpacer />
-                            @if (User.DashboardAccess)
+                            @if (User.DashboardAccess || User.Students.Any(e => e.StudentID == Student!.ID && e.EditInfo))
                             {
                                 @if (Editing)
                                 {
@@ -54,7 +54,10 @@
                                             <td>
                                                 @if (Editing)
                                                 {
-                                                    <MudTextField @bind-Value="Student.StudentName" />
+                                                    <MudStack Row>
+                                                        <MudTextField @bind-Value="Student.FirstName" Label="First Name" />
+                                                        <MudTextField @bind-Value="Student.LastName" Label="Last Name" />
+                                                    </MudStack>
                                                 }
                                                 else
                                                 {
@@ -88,7 +91,8 @@
                                                 }
                                             </td>
                                         </tr>
-                                        <tr>
+                                        @*Taking out QR codes for now*@
+                                        @*<tr>
                                             <td>QR Code</td>
                                             <td>
                                                 @if (ViewQR)
@@ -100,7 +104,7 @@
                                                     <MudIconButton Icon="@Icons.Material.TwoTone.RemoveRedEye" Color="Color.Info" OnClick="() => ViewQR = true" />
                                                 }
                                             </td>
-                                        </tr>
+                                        </tr>*@
                                     </tbody>
                                 </MudSimpleTable>
                             }
@@ -194,7 +198,7 @@
                                                     <MudDatePicker @bind-Date="SelectedDate" Clearable Label="Log New" />
                                                 </td>
                                                 <td>
-                                                    <MudIconButton Icon="@Icons.Material.TwoTone.Save" OnClick="SaveDate" Color="Color.Success" Disabled="SelectedDate == null" />
+                                                    <MudIconButton Icon="@Icons.Material.TwoTone.Save" OnClick="SaveDate" Color="Color.Success" Disabled="SelectedDate == null || Student.Attends.Any(e => e.AttendDate == SelectedDate)" />
                                                 </td>
                                             </tr>
                                         }
@@ -239,17 +243,19 @@
         if (Guid.TryParse(studentid, out Guid StudentID) && (Student == null || Student.ID != StudentID))
         {
             Student = bmaService.GetStudentByID(StudentID);
-            StudentRanks = bmaService.GetStudentRanksByStudent(StudentID);
-            QRCodeImg = null;
-            QRCodeGenerator qrGenerator = new QRCodeGenerator();
-            QRCodeData qrData = qrGenerator.CreateQrCode($"https://berringerma.azurewebsites.net/student/{Student.ID}",QRCodeGenerator.ECCLevel.Q);
-            using (BitmapByteQRCode qrCode = new BitmapByteQRCode(qrData))
+            if (Student != null)
             {
-                byte[] qrImg = qrCode.GetGraphic(20);
-                string base64 = Convert.ToBase64String(qrImg);
-                QRCodeImg = string.Format("data:image/png;base64,{0}", base64);
+                StudentRanks = bmaService.GetStudentRanksByStudent(StudentID);
+                QRCodeImg = null;
+                QRCodeGenerator qrGenerator = new QRCodeGenerator();
+                QRCodeData qrData = qrGenerator.CreateQrCode($"https://berringerma.azurewebsites.net/student/{Student.ID}",QRCodeGenerator.ECCLevel.Q);
+                using (BitmapByteQRCode qrCode = new BitmapByteQRCode(qrData))
+                {
+                    byte[] qrImg = qrCode.GetGraphic(20);
+                    string base64 = Convert.ToBase64String(qrImg);
+                    QRCodeImg = string.Format("data:image/png;base64,{0}", base64);
+                }
             }
-
         }
     }
     private DateTime? SelectedDate { get; set; } = DateTime.Today;

@@ -6,21 +6,34 @@
             <thead>
                 <tr>
                     <th>User Name</th>
-                    <th>Match Student</th>
+                    <th>Access</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (BMAStudent student in Students)
+                @foreach (BMAUser user in Users)
                 {
                     <tr>
-                        <td>@student.StudentName</td>
+                        <td>@user.UserName</td>
                         <td>
-                            <MudSelect @bind-Value="student.UserID" Clearable>
-                                @foreach (BMAUser user in Users.Where(e => !string.IsNullOrEmpty(e.UserName)))
+                            <MudStack>
+                                @foreach (BMAStudentUser studentUser in user.Students)
                                 {
-                                    <MudSelectItem Value="user.UserID">@user.UserName</MudSelectItem>
+                                    <p>
+                                        @Students.FirstOrDefault(e => e.ID == studentUser.StudentID)?.StudentName
+                                        <MudIconButton OnClick="() => RemoveAccess(studentUser)" Icon="@Icons.Material.TwoTone.DeleteForever" Color="Color.Error" />
+                                    </p>
                                 }
-                            </MudSelect>
+                                <MudStack Row>
+                                <MudSelect @bind-Value="user.SelectedStudent" Clearable>
+                                    @foreach (BMAStudent student in Students.Where(e => !user.Students.Any(f => f.StudentID == e.ID)))
+                                    {
+                                        <MudSelectItem Value="student">@student.StudentName</MudSelectItem>
+                                    }
+                                </MudSelect>
+                                <MudIconButton OnClick="() => AddAccess(user, false)" Disabled="user.SelectedStudent == null" Icon="@Icons.Material.TwoTone.AddCircle" Color="Color.Success" />
+                                @*<MudIconButton OnClick="() => AddAccess(user, true)" Disabled="user.SelectedStudent == null" Icon="@Icons.Material.TwoTone.Edit" Color="Color.Success" />*@
+                                </MudStack>
+                            </MudStack>
                         </td>
                     </tr>
                 }
@@ -28,8 +41,7 @@
         </MudSimpleTable>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Close" Variant="Variant.Filled">Cancel</MudButton>
-        <MudButton OnClick="Save" Variant="Variant.Filled" Color="Color.Info">Save</MudButton>
+        <MudButton OnClick="Close" Variant="Variant.Filled" Color="Color.Info">Close</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -40,7 +52,7 @@
     private List<BMAStudent> Students { get; set; } = [];
     protected override void OnInitialized()
     {
-        Users = bmaService.GetAllOtherUsers(User?.UserID ?? Guid.Empty);
+        Users = bmaService.GetNonInstructorUsers();
         Students = bmaService.GetStudents();
     }
     private void Close()
@@ -49,9 +61,28 @@
     }
     private void Save()
     {
-        foreach (BMAStudent student in Students)
-            if (student.IsDirty)
-                bmaService.UpdateStudent(student);
         Close();
+    }
+    private void AddAccess(BMAUser user, bool edit)
+    {
+        if (user.SelectedStudent == null)
+            return;
+        BMAStudentUser newuser = new BMAStudentUser() {
+            StudentID = user.SelectedStudent.ID,
+            UserID = user.UserID,
+            EditInfo = edit
+        };
+        bmaService.CreateStudentUser(newuser);
+        user.Students.Add(newuser);
+        user.SelectedStudent = null;
+    }
+    private void RemoveAccess(BMAStudentUser stuser)
+    {
+        BMAUser? user = Users.FirstOrDefault(e => e.UserID == stuser.UserID);
+        if (user != null)
+        {
+            user.Students.Remove(stuser);
+            bmaService.DeleteStudentUser(stuser);
+        }
     }
 }

@@ -6,7 +6,7 @@ namespace BMAAttendance.Data.Models
     public class BMAStudent
     {
         [Key] public Guid ID { get; set; }
-        private Guid _userID;
+        /*private Guid _userID;
         public Guid UserID
         {
             get
@@ -19,9 +19,11 @@ namespace BMAAttendance.Data.Models
                     _isDirty = true;
                 _userID = value;
             }
-        }
+        }*/
         public Guid SchoolID { get; set; }
-        public string StudentName { get; set; } = "";
+        public string StudentName { get { return LastName + ", " + FirstName; } }
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
         public string EmailAddress { get; set; } = "";
         public string? PhoneNumber { get; set; }
         public Guid? RankID { get; set; }
