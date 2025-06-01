@@ -26,6 +26,7 @@ namespace BMAAttendance.Data.Models
         public string LastName { get; set; } = "";
         public string EmailAddress { get; set; } = "";
         public string? PhoneNumber { get; set; }
+        public string? GupNumber { get; set; }
         public Guid? RankID { get; set; }
         [NotMapped] public BMARank? CurerntRank { get; set; }//set in dialog
         public DateTime? DateAwarded { get; set; }

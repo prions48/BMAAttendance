@@ -91,6 +91,19 @@
                                                 }
                                             </td>
                                         </tr>
+                                        <tr>
+                                            <td>Gup #</td>
+                                            <td>
+                                                @if (Editing)
+                                                {
+                                                    <MudTextField @bind-Value="Student.GupNumber" />
+                                                }
+                                                else
+                                                {
+                                                    @Student.GupNumber
+                                                }
+                                            </td>
+                                        </tr>
                                         @*Taking out QR codes for now*@
                                         @*<tr>
                                             <td>QR Code</td>
