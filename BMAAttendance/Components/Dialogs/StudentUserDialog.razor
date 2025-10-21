@@ -25,7 +25,7 @@
                                 }
                                 <MudStack Row>
                                 <MudSelect @bind-Value="user.SelectedStudent" Clearable>
-                                    @foreach (BMAStudent student in Students.Where(e => !user.Students.Any(f => f.StudentID == e.ID)))
+                                    @foreach (BMAStudent student in Students.Where(e => !user.Students.Any(f => f.StudentID == e.ID)).OrderBy(e => e.LastName))
                                     {
                                         <MudSelectItem Value="student">@student.StudentName</MudSelectItem>
                                     }

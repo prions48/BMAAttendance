@@ -163,10 +163,11 @@ else
             User.UserName = UserName;
             User.EmailAddress = UserEmail;
             bmaService.UpdateUser(User);
+            AlertMessage = "";
             if (BlankLoad && !User.Students.Any())
             {
-                BMAStudent? student = bmaService.GetStudentByEmail(User.EmailAddress);
-                if (student != null)
+                List<BMAStudent> students = bmaService.GetStudentsByEmail(User.EmailAddress);
+                foreach (BMAStudent student in students)
                 {
                     BMAStudentUser stuser = new() {
                         UserID = User.UserID,
@@ -175,9 +176,11 @@ else
                     };
                     bmaService.CreateStudentUser(stuser);
                     User.Students.Add(stuser);
-                    AlertMessage = "Your login account has been linked to your student record.  You may now view your student record.";
+                    if (!string.IsNullOrEmpty(AlertMessage))
+                        AlertMessage += "<br />";
+                    AlertMessage += $"Account linked to {student.StudentName}.";
                 }
-                else
+                if (students.Count == 0)
                 {
                     AlertMessage = "Your data has been recorded.  An instructor will link your login to your student data soon.";
                 }

@@ -104,9 +104,9 @@ namespace BMAAttendance.Data.Models
             }
             return student;
         }
-        public BMAStudent? GetStudentByEmail(string email)
+        public List<BMAStudent> GetStudentsByEmail(string email)
         {
-            return _context.BMAStudents.FirstOrDefault(e => e.EmailAddress != null && e.EmailAddress.ToUpper() == email.ToUpper());
+            return _context.BMAStudents.Where(e => e.EmailAddress != null && e.EmailAddress.ToUpper() == email.ToUpper()).ToList();
         }
         public void CreateStudent(BMAStudent student)
         {
