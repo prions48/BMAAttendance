@@ -1,6 +1,8 @@
 @page "/settings"
 @inject BMAService bmaService
+@inject UserService userService
 @inject IDialogService dialogService
+@inject NavigationManager navManager
 @using BMAAttendance.Components.Dialogs
 
 @if (User == null)
@@ -32,6 +34,10 @@ else
         <MudTextField @bind-Value="User.EmailAddress" Label="Your Email" />
         <MudButton OnClick="SaveUser" Variant="Variant.Filled" Color="Color.Info"
             Disabled="string.IsNullOrEmpty(User.UserName) || string.IsNullOrEmpty(User.EmailAddress)">Save Profile Info</MudButton>
+        @if (BlankLoad && !string.IsNullOrEmpty(User.UserName) && !string.IsNullOrEmpty(User.EmailAddress))
+        {
+            <MudAlert Severity="Severity.Warning">@AlertMessage</MudAlert>
+        }
     </MudStack>
 }
 
@@ -86,10 +92,13 @@ else
     [CascadingParameter] public BMAUser? User { get; set; }
     private List<BMASchool> Schools { get; set; } = [];
     private List<BMARank> Ranks { get; set; } = [];
+    private bool BlankLoad { get; set; } = false;
     protected override void OnInitialized()
     {
         Schools = bmaService.GetSchools();
         Ranks = bmaService.GetRanks();
+        if (string.IsNullOrEmpty(User?.UserName) && string.IsNullOrEmpty(User?.EmailAddress))
+            BlankLoad = true;
     }
     private async Task AddRank()
     {
@@ -146,6 +155,7 @@ else
     }
     private string UserName { get; set; } = "";
     private string UserEmail { get; set; } = "";
+    private string AlertMessage { get; set; } = "";
     private void SaveUser()
     {
         if (User != null && !string.IsNullOrEmpty(UserName) && !string.IsNullOrEmpty(UserEmail))
@@ -153,6 +163,25 @@ else
             User.UserName = UserName;
             User.EmailAddress = UserEmail;
             bmaService.UpdateUser(User);
+            if (BlankLoad && !User.Students.Any())
+            {
+                BMAStudent? student = bmaService.GetStudentByEmail(User.EmailAddress);
+                if (student != null)
+                {
+                    BMAStudentUser stuser = new() {
+                        UserID = User.UserID,
+                        StudentID = student.ID,
+                        EditInfo = true
+                    };
+                    bmaService.CreateStudentUser(stuser);
+                    User.Students.Add(stuser);
+                    AlertMessage = "Your login account has been linked to your student record.  You may now view your student record.";
+                }
+                else
+                {
+                    AlertMessage = "Your data has been recorded.  An instructor will link your login to your student data soon.";
+                }
+            }
         }
     }
     private async Task ViewUsers()

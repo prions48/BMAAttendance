@@ -35,6 +35,7 @@ namespace BMAAttendance.Data.Models
         }
         public void UpdateUser(BMAUser user)
         {
+            
             _context.BMAUsers.Update(user);
             _context.SaveChanges();
         }
@@ -102,6 +103,10 @@ namespace BMAAttendance.Data.Models
                 student.Attends = _context.BMAStudentAttends.Where(e => e.StudentID == student.ID).ToList();
             }
             return student;
+        }
+        public BMAStudent? GetStudentByEmail(string email)
+        {
+            return _context.BMAStudents.FirstOrDefault(e => e.EmailAddress != null && e.EmailAddress.ToUpper() == email.ToUpper());
         }
         public void CreateStudent(BMAStudent student)
         {

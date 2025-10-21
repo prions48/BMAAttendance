@@ -28,7 +28,7 @@ namespace BMAAttendance.Data.Models
         public string? PhoneNumber { get; set; }
         public string? GupNumber { get; set; }
         public Guid? RankID { get; set; }
-        [NotMapped] public BMARank? CurerntRank { get; set; }//set in dialog
+        [NotMapped] public BMARank? CurrentRank { get; set; }//set in dialog
         public DateTime? DateAwarded { get; set; }
         public DateTime LastAttended
         {

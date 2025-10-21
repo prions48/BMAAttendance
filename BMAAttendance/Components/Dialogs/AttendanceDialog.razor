@@ -69,20 +69,20 @@
     {
         if (Sort == SortType.ByRank)
             foreach (BMAStudent student in Students)
-                student.CurerntRank = Ranks.FirstOrDefault(e => e.ID == student.RankID);
+                student.CurrentRank = Ranks.FirstOrDefault(e => e.ID == student.RankID);
         if (SortDescend)
         {
             if (Sort == SortType.Alphabetical)
                 return Students.OrderByDescending(e => e.StudentName);
             if (Sort == SortType.ByRank)
-                return Students.OrderByDescending(e => e.CurerntRank?.OrderNumber);
+                return Students.OrderByDescending(e => e.CurrentRank?.OrderNumber);
             if (Sort == SortType.LastAttend)
                 return Students.OrderByDescending(e => e.LastAttended);
         }
         if (Sort == SortType.Alphabetical)
             return Students.OrderBy(e => e.StudentName);
         if (Sort == SortType.ByRank)
-            return Students.OrderBy(e => e.CurerntRank?.OrderNumber);
+            return Students.OrderBy(e => e.CurrentRank?.OrderNumber);
         return Students.OrderBy(e => e.LastAttended);
     }
     public enum SortType

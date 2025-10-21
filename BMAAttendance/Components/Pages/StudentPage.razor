@@ -136,7 +136,10 @@
                                     <tr>
                                         <th>Rank</th>
                                         <th>Date Promoted</th>
-                                        <th>Action</th>
+                                        @if (User.DashboardAccess)
+                                        {
+                                            <th>Action</th>
+                                        }
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -171,9 +174,12 @@
 
                                             </td>
                                             <td>@rank.DateAwarded.ToString("MM/dd/yy")</td>
-                                            <td>
-                                                <MudIconButton Color="Color.Error" Icon="@Icons.Material.TwoTone.DeleteForever" OnClick="() => DeleteStudentRank(rank)" Disabled="rank.RankID != Student.RankID" />
-                                            </td>
+                                            @if (User.DashboardAccess)
+                                            {
+                                                <td>
+                                                    <MudIconButton Color="Color.Error" Icon="@Icons.Material.TwoTone.DeleteForever" OnClick="() => DeleteStudentRank(rank)" Disabled="rank.RankID != Student.RankID" />
+                                                </td>
+                                            }
                                         </tr>
                                     }
                                 </tbody>
@@ -220,7 +226,10 @@
                                             <tr>
                                                 <td>@attend.AttendDate.ToString("MM/dd/yy")</td>
                                                 <td>
-                                                    <MudIconButton OnClick="() => DeleteDate(attend)" Color="Color.Error" Icon="@Icons.Material.TwoTone.DeleteForever" />
+                                                    @if (User.DashboardAccess)
+                                                    {
+                                                        <MudIconButton OnClick="() => DeleteDate(attend)" Color="Color.Error" Icon="@Icons.Material.TwoTone.DeleteForever" />
+                                                    }
                                                 </td>
                                             </tr>
                                         }
